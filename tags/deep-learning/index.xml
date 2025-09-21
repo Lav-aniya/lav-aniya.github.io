@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Deep Learning on Lav-Aniya&#39;s Site</title>
+    <link>https://lav-aniya.github.io/tags/deep-learning/</link>
+    <description>Recent content in Deep Learning on Lav-Aniya&#39;s Site</description>
+    <generator>Hugo -- 0.150.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 21 Sep 2025 15:38:57 +0530</lastBuildDate>
+    <atom:link href="https://lav-aniya.github.io/tags/deep-learning/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Optimizers</title>
+      <link>https://lav-aniya.github.io/posts/optimizers/</link>
+      <pubDate>Sun, 21 Sep 2025 15:38:57 +0530</pubDate>
+      <guid>https://lav-aniya.github.io/posts/optimizers/</guid>
+      <description>An overview of common optimizers like Adam, SGD, and RMSprop used in training neural networks.</description>
+    </item>
+  </channel>
+</rss>
