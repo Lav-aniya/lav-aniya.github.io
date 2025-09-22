@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Blogs on Lav-Aniya&#39;s Site</title>
+    <link>https://lav-aniya.github.io/blogs/</link>
+    <description>Recent content in Blogs on Lav-Aniya&#39;s Site</description>
+    <generator>Hugo -- 0.150.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 22 Sep 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://lav-aniya.github.io/blogs/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Attention</title>
+      <link>https://lav-aniya.github.io/blogs/attentionsequence/</link>
+      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/attentionsequence/</guid>
+      <description>An Introduction to Attention</description>
+    </item>
+    <item>
+      <title>Attention_2</title>
+      <link>https://lav-aniya.github.io/blogs/attention_2/</link>
+      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/attention_2/</guid>
+      <description>part 2 Attention</description>
+    </item>
+    <item>
+      <title>O2</title>
+      <link>https://lav-aniya.github.io/blogs/optimizers_2/</link>
+      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/optimizers_2/</guid>
+      <description>An Introduction to Optimization</description>
+    </item>
+    <item>
+      <title>O1</title>
+      <link>https://lav-aniya.github.io/blogs/optimizers/</link>
+      <pubDate>Sun, 21 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/optimizers/</guid>
+      <description>An Introduction to Optimization</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Technical Guides on Lav-Aniya&#39;s Site</title>
+    <link>http://localhost:1313/categories/technical-guides/</link>
+    <description>Recent content in Technical Guides on Lav-Aniya&#39;s Site</description>
+    <generator>Hugo -- 0.150.0</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 21 Sep 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/technical-guides/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Optimizers</title>
+      <link>http://localhost:1313/blogs/optimizers/</link>
+      <pubDate>Sun, 21 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blogs/optimizers/</guid>
+      <description>An overview of common optimizers like Adam, SGD, and RMSprop used in training neural networks.</description>
+    </item>
+  </channel>
+</rss>
