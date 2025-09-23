@@ -246,6 +246,7 @@ Using the same learning rate (step size) for all of them is inefficient.</p>
 <p>This is a game-changer for problems with sparse data. For example, in language models, the parameter for a common word like &ldquo;the&rdquo; will get small updates, while the parameter for a rare word like &ldquo;aficionado&rdquo; will get much larger updates, helping it learn effectively even though it appears less often.</p>
 <p><strong>The Fatal Flaw:</strong></p>
 <p>Adagrad has a big problem. It&rsquo;s a little too cautious. The running tally it keeps of past activity <strong>only ever goes up.</strong> Over a long training run, the tally for every single knob gets huge. This causes the learning rate for all knobs to shrink and shrink until it&rsquo;s practically zero. The model completely stops learning. It&rsquo;s like the manager gets so nervous they refuse to let anyone turn any knobs at all.</p>
+<p><img alt="Explained the fatal flaw" loading="lazy" src="/optimizers/adagrad_fatal_flaw.png"></p>
 <h3 id="the-technical-dive">The Technical Dive<a hidden class="anchor" aria-hidden="true" href="#the-technical-dive">#</a></h3>
 <p>Adagrad&rsquo;s key innovation is to modify the general learning rate $\eta$ on a per-parameter basis, using a historical record of the gradients.</p>
 <p><strong>The Update Rule:</strong></p>
@@ -312,6 +313,7 @@ Using the same learning rate (step size) for all of them is inefficient.</p>
 <p>&ldquo;Let&rsquo;s take 90% of our old memory, and mix 10% of what <em>just</em> happened.&rdquo;</p>
 <p>This means the influence of very old events gradually fades away. If a knob was super active a long time ago but isn&rsquo;t doing much now, RMSprop will slowly forget its chaotic past and be willing to trust it with a larger learning rate again.</p>
 <p>This prevents the optimizer&rsquo;s &ldquo;anxiety&rdquo; from building up indefinitely. It keeps the good part of Adagrad (the adaptive learning rate) while throwing out the bad part (the paralyzing, ever-growing memory).</p>
+<p><img alt="A gif explaining Adagrad vs RMSprop" loading="lazy" src="/optimizers/gifs/transparent_AdagradvsRMSprop.gif"></p>
 <p>The result is an optimizer that can continue learning effectively for much, much longer.</p>
 <h3 id="the-technical-dive-1">The Technical Dive<a hidden class="anchor" aria-hidden="true" href="#the-technical-dive-1">#</a></h3>
 <p>RMSprop (Root Mean Square Propagation) modifies Adagrad&rsquo;s update rule by changing how the gradient accumulation is performed. Instead of a simple sum, it uses an exponentially weighted moving average.</p>
@@ -343,6 +345,7 @@ Using the same learning rate (step size) for all of them is inefficient.</p>
 <li>RMSprop: $S_{t, i} = \beta S_{t-1, i} + (1 - \beta) g_{t, i}^2$ (a weighted average)</li>
 </ul>
 <p>The presence of the decay rate $\beta$ is the entire fix. Because we&rsquo;re always multiplying the old memory $S_{t-1, i}$ by a number less than 1 (e.g., 0.9), the influence of old gradients exponentially decays. They are slowly &ldquo;forgotten.&rdquo;</p>
+<p><img alt="memory bank" loading="lazy" src="/optimizers/memory_banks_adagrad_rmsprop.png"></p>
 <p>This prevents the denominator ($\sqrt{S_{t, i} + \epsilon}$) from growing infinitely large. It keeps the effective learning rate adaptive but prevents it from vanishing, allowing learning to proceed.</p>
 <h3 id="key-hyperparameters">Key Hyperparameters:<a hidden class="anchor" aria-hidden="true" href="#key-hyperparameters">#</a></h3>
 <ol>
