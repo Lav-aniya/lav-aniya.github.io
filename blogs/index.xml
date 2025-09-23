@@ -9,17 +9,24 @@
     <lastBuildDate>Mon, 22 Sep 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://lav-aniya.github.io/blogs/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>O2</title>
-      <link>https://lav-aniya.github.io/blogs/optimizers_2/</link>
-      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
-      <guid>https://lav-aniya.github.io/blogs/optimizers_2/</guid>
-      <description>An Introduction to Optimization</description>
-    </item>
-    <item>
       <title>O1</title>
       <link>https://lav-aniya.github.io/blogs/optimizers/</link>
       <pubDate>Sun, 21 Sep 2025 00:00:00 +0000</pubDate>
       <guid>https://lav-aniya.github.io/blogs/optimizers/</guid>
+      <description>An Introduction to Optimization</description>
+    </item>
+    <item>
+      <title>O2</title>
+      <link>https://lav-aniya.github.io/blogs/optimizers2/</link>
+      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/optimizers2/</guid>
+      <description>An Introduction to Optimization</description>
+    </item>
+    <item>
+      <title>O3</title>
+      <link>https://lav-aniya.github.io/blogs/optimizers3/</link>
+      <pubDate>Mon, 22 Sep 2025 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/blogs/optimizers3/</guid>
       <description>An Introduction to Optimization</description>
     </item>
   </channel>
