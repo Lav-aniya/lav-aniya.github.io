@@ -4,7 +4,7 @@
     <title>Deep Learning on Lav-Aniya&#39;s Site</title>
     <link>https://lav-aniya.github.io/tags/deep-learning/</link>
     <description>Recent content in Deep Learning on Lav-Aniya&#39;s Site</description>
-    <generator>Hugo -- 0.150.0</generator>
+    <generator>Hugo -- 0.152.2</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 22 Sep 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://lav-aniya.github.io/tags/deep-learning/index.xml" rel="self" type="application/rss+xml" />
@@ -14,6 +14,13 @@
       <pubDate>Sun, 21 Sep 2025 00:00:00 +0000</pubDate>
       <guid>https://lav-aniya.github.io/blogs/optimizers/</guid>
       <description>An Introduction to Optimization</description>
+    </item>
+    <item>
+      <title>BioMarking</title>
+      <link>https://lav-aniya.github.io/projects/biomarking/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://lav-aniya.github.io/projects/biomarking/</guid>
+      <description>biometric steganography</description>
     </item>
     <item>
       <title>O2</title>
