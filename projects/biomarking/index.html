@@ -55,7 +55,32 @@
         }
 
     </style>
-</noscript><meta property="og:url" content="https://lav-aniya.github.io/projects/biomarking/">
+</noscript>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: "\\begin{equation}", right: "\\end{equation}", display: true},
+                {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
+                {left: "\\begin{align}", right: "\\end{align}", display: true},
+                {left: "\\begin{align*}", right: "\\end{align*}", display: true},
+                {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
+                {left: "\\begin{gather}", right: "\\end{gather}", display: true},
+                {left: "\\begin{CD}", right: "\\end{CD}", display: true},
+            ],
+            throwOnError : false
+        });
+    });
+</script>
+
+<meta property="og:url" content="https://lav-aniya.github.io/projects/biomarking/">
   <meta property="og:site_name" content="Lav-Aniya&#39;s Site">
   <meta property="og:title" content="BioMarking">
   <meta property="og:description" content="biometric steganography">
@@ -101,8 +126,8 @@
   "keywords": [
     "Deep Learning", "GANs", "Python", "Security"
   ],
-  "articleBody": "Tech Stack Language: Python Frameworks: PyTorch, FastAI Tools: OpenCV, NumPy Frontend: Next.js (In progress) The Engineering Challenge The Conflict: The Goal: The Approach: Data Preprocessing Pipeline (The Input Layer) Normalization: (Scaling to [-1, 1] range) Reflective Padding: (Preventing edge artifacts in CNNs) Patching Strategy: (Sliding window technique (128x128 kernels) to handle high-res images) Spatial replication: (How a 32-bit text string is expanded to match 2D feature maps) The Generator Architecture Backbone: (Modified U-Net) Critical Component: (Skip Connections (Why they are essential for ridge preservation).) Bottleneck: (Where the Message Tensor is fused with Image Features) Output: (Tanh activation for pixel generation) The EXtractor Architecture Backbone: (Standard CNN Classifier) Task: (Multi-label classification (predicting 32 independent bits)) The Noise Layer: (Differentiable augmentations (Gaussian noise/blur) injected during training to force robust encoding) The Critic Architecture Framework: (Wasserstein GAN with Gradient Penalty (WGAN-GP)) Purpose: (Enforcing the 1-Lipschitz constraint to prevent mode collapse and ensure visual realism) The Biometric Matcher Model: (pre-trained DeepPrint (Inception-ResNet)) State: (Frozen weights (Non-trainable)) Mechanism: (Calculating Cosine Similarity loss betweenj Original and Watermarked identity vectors) Gradient FLow: (How errors backpropagate through the frozen matcher to correct the Generator) The Phases Training Curriculum Phase 1: (Extractor Warmup (Learningn to see patterns in noise)) Phase 2: (Generator Mimic (Learning to reconstruct fingerprints)) Phase 3: (Joint Training (Cooperative game)) Phase 4: (Adversarial Tuning (Competitive game with Critic + Matcher)) Results \u0026 Metrics Visual: (PSNR/SSIM score) Biometric: (Cosine Similarity score (\u003e0.90 threshold)) Recovery: (Bit Accuracy rate under attack) ",
-  "wordCount" : "242",
+  "articleBody": "BioMarking is an AI-powered security system that turns a human fingerprint into a “digital safe”. It allows users to hide sensitive text payloads (like passwords, keys, coordinates or anything) directly inside the pixel structure of a fingerprint image.\nUnlike standard steganography tools that treat images as meaningless containers, BioMarking respects the biological constraints of the fingerprint. It embeds data invisibly while ensuring the fingerprint remains biometrically valid. This means the watermarked image can still be used to unlock phone, pass a scanner, or match a database, effectively doubling the utility of the biometric credential.\nThe system operates on a “Zero-knowledge” principle. The payload is encrypted client-side (AES-256) before it ever touches the AI. The Deep Learning model acts purely as a signal carrier, embedding encrypted noise inot biological features without ever understanding the content.\nTech Stack:\nLanguage: Python Frameworks: PyTorch, FastAPI Tools: OpenCV, NumPy Frontend: Next.js The Engineering Challenge The core problem in biometric watermarking is a conflict of interest between two opposing mathematical goals.\nThe Conflict: Steganography requires perturbation. To hide a digital payload (like cryptographic key or ID) inside and image, you must alter the pixel values. To make that data robust against noise or compression, you typically need to alter the image significantly in the frequency domain.\nBiometrics requires precision. Fingerprint recognition algorithms, whether they are classical minutiae extractors or modern Deep Learning matchers (like DeepPrint), rely heavily on high-frequency spatial details. Specifically, they look for ridge bifurcations, endings, and pore locations.\nIf a watermarking algorithm modifies these specific pixels to hide data, it destroys the biometric identity. The scanner sees a “different perseon”, rendering the fingerprint useless for authentication.\nThe Goal: The objective was to build a system that could embed a 32-bit binary payload into a fingerprint image while satisfying three strict constraints:\nBiometric Utility: The watermarked image must match the original identity with a Cosine Similarity score of \u003e0.90. Visual Invisibility: The changes must be statistically indistinguishable from sensor noise (PSNR\u003e30dB). Robust Recovery: the payload must be recoverable with \u003e99% accuracy, even if the image is degraded by noise or blurring. The Approach: Standard steganography techniques (like Least Significant Bit modification) are too fragile; they break under the slightest compression. I utilized a custom Generative Adversarial Network (GAN) to learn anon-linear mapping function: $$ G: \\left I_original, M_message \\right -\u003e I_watermarked $$\nData Preprocessing Pipeline (The Input Layer) Normalization: (Scaling to [-1, 1] range) Reflective Padding: (Preventing edge artifacts in CNNs) Patching Strategy: (Sliding window technique (128x128 kernels) to handle high-res images) Spatial replication: (How a 32-bit text string is expanded to match 2D feature maps) The Generator Architecture Backbone: (Modified U-Net) Critical Component: (Skip Connections (Why they are essential for ridge preservation).) Bottleneck: (Where the Message Tensor is fused with Image Features) Output: (Tanh activation for pixel generation) The EXtractor Architecture Backbone: (Standard CNN Classifier) Task: (Multi-label classification (predicting 32 independent bits)) The Noise Layer: (Differentiable augmentations (Gaussian noise/blur) injected during training to force robust encoding) The Critic Architecture Framework: (Wasserstein GAN with Gradient Penalty (WGAN-GP)) Purpose: (Enforcing the 1-Lipschitz constraint to prevent mode collapse and ensure visual realism) The Biometric Matcher Model: (pre-trained DeepPrint (Inception-ResNet)) State: (Frozen weights (Non-trainable)) Mechanism: (Calculating Cosine Similarity loss betweenj Original and Watermarked identity vectors) Gradient FLow: (How errors backpropagate through the frozen matcher to correct the Generator) The Phases Training Curriculum Phase 1: (Extractor Warmup (Learningn to see patterns in noise)) Phase 2: (Generator Mimic (Learning to reconstruct fingerprints)) Phase 3: (Joint Training (Cooperative game)) Phase 4: (Adversarial Tuning (Competitive game with Critic + Matcher)) Results \u0026 Metrics Visual: (PSNR/SSIM score) Biometric: (Cosine Similarity score (\u003e0.90 threshold)) Recovery: (Bit Accuracy rate under attack) ",
+  "wordCount" : "607",
   "inLanguage": "en",
   "datePublished": "0001-01-01T00:00:00Z",
   "dateModified": "0001-01-01T00:00:00Z",
@@ -198,23 +223,50 @@
     <div class="post-description">
       biometric steganography
     </div>
-    <div class="post-meta">2 min&nbsp;·&nbsp;Lav-niya
+    <div class="post-meta">3 min&nbsp;·&nbsp;Lav-niya
 
 </div>
   </header> 
-  <div class="post-content"><h2 id="tech-stack">Tech Stack<a hidden class="anchor" aria-hidden="true" href="#tech-stack">#</a></h2>
+  <div class="post-content"><p>BioMarking is an AI-powered security system that turns a human fingerprint into a &ldquo;digital safe&rdquo;. It allows users to hide sensitive text payloads (like passwords, keys, coordinates or anything) directly inside the pixel structure of a fingerprint image.</p>
+<p>Unlike standard steganography tools that treat images as meaningless containers, BioMarking respects the biological constraints of the fingerprint. It embeds data invisibly while ensuring the fingerprint <strong>remains biometrically valid</strong>. This means the watermarked image can still be used to unlock phone, pass a scanner, or match a database, effectively doubling the utility of the biometric credential.</p>
+<p>The system operates on a &ldquo;Zero-knowledge&rdquo; principle. The payload is encrypted client-side (AES-256) before it ever touches the AI. The Deep Learning model acts purely as a signal carrier, embedding encrypted noise inot biological features without ever understanding the content.</p>
+<p><strong>Tech Stack:</strong></p>
 <ul>
 <li><strong>Language:</strong> Python</li>
-<li><strong>Frameworks:</strong> PyTorch, FastAI</li>
+<li><strong>Frameworks:</strong> PyTorch, FastAPI</li>
 <li><strong>Tools:</strong> OpenCV, NumPy</li>
-<li><strong>Frontend:</strong> Next.js (In progress)</li>
+<li><strong>Frontend:</strong> Next.js</li>
 </ul>
 <h2 id="the-engineering-challenge">The Engineering Challenge<a hidden class="anchor" aria-hidden="true" href="#the-engineering-challenge">#</a></h2>
+<p>The core problem in biometric watermarking is a conflict of interest between two opposing mathematical goals.</p>
 <ul>
-<li><strong>The Conflict:</strong></li>
-<li><strong>The Goal:</strong></li>
-<li><strong>The Approach:</strong></li>
+<li><strong>The Conflict:</strong>
+<ul>
+<li>
+<p><strong>Steganography requires perturbation</strong>. To hide a digital payload (like cryptographic key or ID) inside and image, you must alter the pixel values. To make that data robust against noise or compression, you typically need to alter the image significantly in the frequency domain.</p>
+</li>
+<li>
+<p><strong>Biometrics requires precision.</strong> Fingerprint recognition algorithms, whether they are classical minutiae extractors or modern Deep Learning matchers (like DeepPrint), rely heavily on high-frequency spatial details. Specifically, they look for <strong>ridge bifurcations, endings, and pore locations.</strong></p>
+</li>
 </ul>
+</li>
+</ul>
+<p>If a watermarking algorithm modifies these specific pixels to hide data, it destroys the biometric identity. The scanner sees a &ldquo;different perseon&rdquo;, rendering the fingerprint useless for authentication.</p>
+<ul>
+<li><strong>The Goal:</strong></li>
+</ul>
+<p>The objective was to build a system that could embed a <strong>32-bit binary payload</strong> into a fingerprint image while satisfying three strict constraints:</p>
+<ol>
+<li><strong>Biometric Utility:</strong> The watermarked image must match the original identity with a Cosine Similarity score of &gt;0.90.</li>
+<li><strong>Visual Invisibility:</strong> The changes must be statistically indistinguishable from sensor noise (PSNR&gt;30dB).</li>
+<li><strong>Robust Recovery:</strong> the payload must be recoverable with &gt;99% accuracy, even if the image is degraded by noise or blurring.</li>
+</ol>
+<ul>
+<li><strong>The Approach:</strong>
+Standard steganography techniques (like Least Significant Bit modification) are too fragile; they break under the slightest compression.</li>
+</ul>
+<p>I utilized a custom <strong>Generative Adversarial Network (GAN)</strong> to learn anon-linear mapping function:
+$$ G: \left I_original, M_message \right -&gt; I_watermarked $$</p>
 <h2 id="data-preprocessing-pipeline-the-input-layer">Data Preprocessing Pipeline (The Input Layer)<a hidden class="anchor" aria-hidden="true" href="#data-preprocessing-pipeline-the-input-layer">#</a></h2>
 <ul>
 <li><strong>Normalization:</strong> (Scaling to [-1, 1] range)</li>
