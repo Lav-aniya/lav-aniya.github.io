@@ -1,25 +1,18 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>Projects on Lav-Aniya&#39;s Site</title>
-    <link>https://lav-aniya.github.io/projects/</link>
-    <description>Recent content in Projects on Lav-Aniya&#39;s Site</description>
+    <title>PyTorch on Lav-Aniya&#39;s Site</title>
+    <link>https://lav-aniya.github.io/tags/pytorch/</link>
+    <description>Recent content in PyTorch on Lav-Aniya&#39;s Site</description>
     <generator>Hugo -- 0.158.0</generator>
     <language>en-us</language>
-    <atom:link href="https://lav-aniya.github.io/projects/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://lav-aniya.github.io/tags/pytorch/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Autonomous Drone Navigation using 3D Gaussian Splatting and Foundation Models</title>
       <link>https://lav-aniya.github.io/projects/auto/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://lav-aniya.github.io/projects/auto/</guid>
       <description>An end-to-end autonomous drone navigation system combining 3D Gaussian Splatting, DINOv2 for Visual Place Recognition, and hybrid RRT-Connect/APF planning.</description>
-    </item>
-    <item>
-      <title>BioMarking</title>
-      <link>https://lav-aniya.github.io/projects/biomarking/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://lav-aniya.github.io/projects/biomarking/</guid>
-      <description>biometric steganography</description>
     </item>
   </channel>
 </rss>

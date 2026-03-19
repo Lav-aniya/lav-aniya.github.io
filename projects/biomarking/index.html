@@ -281,7 +281,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <ul>
 <li><strong>The Math:</strong> $$ I_{norm} = \frac{I - 127.5}{127.5} $$</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># We chain transformations to map pixel values to the [-1, 1] range.</span>
 </span></span><span style="display:flex;"><span>transform <span style="color:#f92672">=</span> transforms<span style="color:#f92672">.</span>Compose([
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Convert [0, 255] integer pixels -&gt; [0.0, 1.0] float tensor</span>
@@ -308,7 +308,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <p><strong>The Result:</strong> This maintains the <strong>spatial frequency continuity</strong> of the fingerprint. The Convolutional layers perceive a continuous pattern, preventing the model from learning edge artifacts that would be easily detectable by steganalysis tools.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Calculate dynamic padding</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># We ensure the image dimensions are perfectly divisible by the stride (128)</span>
 </span></span><span style="display:flex;"><span>pad_H <span style="color:#f92672">=</span> (STRIDE <span style="color:#f92672">-</span> (H <span style="color:#f92672">-</span> PATCH_SIZE) <span style="color:#f92672">%</span> STRIDE) <span style="color:#f92672">%</span> STRIDE
@@ -327,7 +327,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <li><strong>Stride:</strong> 128 pixels (during training) or overlapping with weighted averaging (during inference).</li>
 </ul>
 <p>This transformation converts our dataset from $ N $ large, global images into $ N \times K $ smaller, focused texture patches. This forces the Generator to learn <strong>local ridge characteristics</strong> (micro-features) rather than trying to memorize global finger shapes. This makes the watermark robust across different sensor types and resolutions.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Sliding Window Extraction (Unfold)</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># &#34;unfold&#34; extracts sliding local blocks from a large image tensor</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Input: [1, Channels, Height, Width] -&gt; Output: [1, Channels*128*128, Num_Patches]</span>
@@ -375,7 +375,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 </li>
 </ul>
 <p>By boradcasting the message, <strong>every pixel in the latent space &ldquo;knows&rdquo; the secret message</strong>. This provides masssive redundancy. It allows the Generator to hide bits locally in every region of the fingerprint. Consequently, even if the final image is cropped or partially obscured, the message can often still be recovered from the remaining fragments.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Define a prjectino layer to expand the 32-bit message</span>
 </span></span><span style="display:flex;"><span>    self<span style="color:#f92672">.</span>msg_proc <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Sequential(
 </span></span><span style="display:flex;"><span>        nn<span style="color:#f92672">.</span>Linear(MESSAGE_LENGTH, <span style="color:#ae81ff">16</span><span style="color:#f92672">*</span><span style="color:#ae81ff">16</span><span style="color:#f92672">*</span><span style="color:#ae81ff">16</span>),
@@ -406,7 +406,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <li><strong>Result:</strong> The network passes high-resolution spatial information (the ridge structure) from the input directly to the output, bypassing the bottleneck entirely.</li>
 <li><strong>Benefit:</strong> The bottleneck doesn&rsquo;t have to memorize the entire image. It only needs to calculate the <strong>residual noise</strong> (the &ldquo;delta&rdquo;) required to embed the watermark.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># The U-Net structure allows us to pass spatial details across the network</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>d1 <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>dec1(x)
@@ -435,7 +435,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 </ul>
 </li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ResBlock</span>(nn<span style="color:#f92672">.</span>Module):
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
 </span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Residual Block used in the bottleneck
@@ -462,7 +462,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <li><strong>Consraint:</strong> Tanh bounds the pixel output strictly to [-1, 1]</li>
 <li><strong>Consistency:</strong> This matches the input normalization from the preprocessing step, ensuring the Generator produces valid pixel values without needing to clip the data, which would destroy information.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># The Decoder layers (Upsampling + Channel Reduction)</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Input from Bottleneck: 144 channels (16x16)</span>
 </span></span><span style="display:flex;"><span>
@@ -500,7 +500,7 @@ $$ G \colon ( I_{original}, M_{message} ) \rightarrow I_{watermarked} $$</p>
 <li><strong>Components:</strong> Each block consists of <code>Conv2d</code> $\rightarrow$ <code>BatchNorm2d</code> $\rightarrow$ <code>LeakyRelU</code>.</li>
 <li><strong>Function:</strong> The early layers detect low-level texture variations (edges, ridges), while deeper layers aggregate these into high-level abstract features representing the hidden signal. The final spatial map is flattened into a dense vector.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Extractor</span>(nn<span style="color:#f92672">.</span>Module):
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self):
 </span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
@@ -529,7 +529,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 </li>
 </ul>
 <p>This forces the GEnerator to abandon fragile LSB tactics and instead encode the watermark into robust, <strong>low-frequency spatial features</strong> that survive real-worl degradation.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Generate Fake Image</span>
 </span></span><span style="display:flex;"><span>fake_img <span style="color:#f92672">=</span> generator(real_img, msg)
 </span></span><span style="display:flex;"><span>
@@ -549,7 +549,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <li><strong>Activation:</strong> Unlike a multiclass classifier (which used Softmax), we use Sigmoid.</li>
 <li><strong>Reasoning:</strong> This treats the problem as <strong>Multi-Label Classification</strong>. Each of the 32 bits is an independent Bernoulli variable (0 or 1). The network outputs a probability for each bit position independently, ensuring high accuracy even if one of the string is harder to decode than another.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># The classification Head</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Input: Flattened features (256 * 8 * 8)</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Output: 32 independent probabilities</span>
@@ -575,7 +575,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <li><strong>Design Choice: No Batch Normalization.</strong> WGAN-GP penalizes the norm of the gradient with respect to each input independently. Batch Normalization creates correlations between samples in a batch, which invalidates the theoretical guarantees of the gradient Penalty.</li>
 <li><strong>Output:</strong> A single Linear layer with <strong>no acitvation function</strong>. The output is an unbounded scalar value representing the &ldquo;realness&rdquo; score, not a probability.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Critic</span>(nn<span style="color:#f92672">.</span>Module):
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self):
 </span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
@@ -609,7 +609,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <li><strong>My Implementation: Gradient Penalty.</strong> I sample random points along the straight ines connecting real and fake images. I then penalize the model if the gradient norm at these points deviates from 1. $$ L_{GP} = \mathbb{E} [( \parallel \nabla_{\hat{x}}D(\hat{x}) \parallel_{2} - 1 )^{2}] $$</li>
 <li><strong>Outcome:</strong> This ensures stable training dynamics and forces the Generator to match the high-frequency texture statistics of the real fingerprints, rather than just their general shape.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">gradient_penalty</span>(critic, real, fake, device<span style="color:#f92672">=</span>DEVICE):
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># 1. Random Weighting (Interpolation)</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Sample random points along the line connecting Real and Fake images</span>
@@ -649,7 +649,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <li><strong>Output:</strong> A dense feature vector representing the unique ridge topology.</li>
 <li><strong>Training State:Frozen</strong>. The weights of this model are pre-trained on millions of identities and are <strong>not updated</strong> during our training loop. We treat the Matcher as a differentiable &ldquo;black box&rdquo; judge.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Matcher</span>(nn<span style="color:#f92672">.</span>Module):
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, weights_path<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>):
 </span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
@@ -670,7 +670,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <li>
 <p><strong>Forward Pass:</strong> $$ v_{orig} = M(I_{orig}) $$ $$ v_{wm} = M(G(I_{orig}, msg)) $$</p>
 <p>However, in production, the <strong>DeepPrint</strong> library has a known bug where it crashes when processing a single image (Batch Size = 1). Since users upload one file at a time, I had to workaround in the forward method to duplicate the tensor on the fly:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, x):
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e"># REsize to 299x299 (DeepPrint requirement)</span>
 </span></span><span style="display:flex;"><span>    x_resized <span style="color:#f92672">=</span> F<span style="color:#f92672">.</span>interpolate(x, size<span style="color:#f92672">=</span>(<span style="color:#ae81ff">299</span>, <span style="color:#ae81ff">299</span>), mode<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;bilinear&#39;</span>, align_corners<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
@@ -690,7 +690,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p>The loss function minimizes the distance (maximizing similarity): $$ L_{bio} = 1 - CosineSimilarity(v_{orig}, v_{wm}) $$</p>
 </li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calculate_biometric_score</span>(matcher, img_orig, img_wm):
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">with</span> torch<span style="color:#f92672">.</span>no_grad():
 </span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Fet Identity Vectors (Embeddings)</span>
@@ -751,7 +751,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p><strong>Outcome:</strong> The Extractor achieves &gt;90% bit accuracy on synthetic data, ensuring that when the Generator starts training, it receives meaningful gradients immediately.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># We use synthetic data to teach the Extractor before the Generator is ready</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> random<span style="color:#f92672">.</span>random() <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0.6</span>:
@@ -781,7 +781,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p><strong>Outcome:</strong> The Generator produces clean fingerprint images (PSNR &gt; 35dB) that look identical to input but contain no hidden data yet.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># We force the Generator to mimic the synthetic additive watermark</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># to learn the basic texture modifications required</span>
 </span></span><span style="display:flex;"><span>
@@ -808,7 +808,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p><strong>Logic:</strong> This aligns the feature spaces of the two networks. The Generator gently probes the Extractor to find frequency bands are &ldquo;readable&rdquo;, while the Extractor adjusts its filters to recognize the Generator&rsquo;s specific encoding style. It prevents the &ldquo;shock&rdquo; of sudden high-dimensional loss signals.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># G and E are connected, but Matcher and Critic are still disabled.</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>enc_g <span style="color:#f92672">=</span> generator(img, msg)
@@ -841,7 +841,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p><strong>Result:</strong> We achieve High Bit Accuracy (&gt;99%) and High Biometric Scores, but the images often look &ldquo;noisy&rdquo; or &ldquo;digital&rdquo; to the human eye.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># We introduce the Biometric Matcher. Critic is still disabled</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">#... Extraction and PErceptual calculation...</span>
@@ -875,7 +875,7 @@ The defining feature of the Extractor is <strong>how it is trained</strong>. In 
 <p><strong>Outcome:</strong> The system converges. The artifacts disappear, leaving a biometrically valid, visually clean fingerprint that holds robust payload.</p>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># Adversarial Loss (critic score)</span>
 </span></span><span style="display:flex;"><span>adv_loss <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>critic(fake_g)<span style="color:#f92672">.</span>mean()
 </span></span><span style="display:flex;"><span>
@@ -946,7 +946,7 @@ To verify that the watermark is imperceptible to the human eye, I utilized stand
 </ul>
 </li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># we convert tensors to standard 8-bit integers for fair evaluation</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># we convert tensors to standard 8-bit integers for fair evaluation</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>orig_np <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>clip(orig_np, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">255</span>)<span style="color:#f92672">.</span>astype(np<span style="color:#f92672">.</span>uint8)
 </span></span><span style="display:flex;"><span>wm_np <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>clip(wm_np, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">255</span>)<span style="color:#f92672">.</span>astype(np<span style="color:#f92672">.</span>uint8)
@@ -990,7 +990,7 @@ To ensure the image defeats automated detection, we calculate the <strong>Stealt
 <li><strong>Metric: KL-Divergence</strong> (Kullback-Leibler) between the pixel histograms of $I_{orig}$ and $I_{wm}$.</li>
 <li><strong>Result:</strong> The system achieves a low divergence score, indicating that the global statistical properties of the image (brightness distribution, contrast variance) remain statistically identical to a natural fingerprint, making the watermark difficult to flag with standard forensic tools.</li>
 </ul>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calculate_steganalysis_score</span>(orig_np, wm_np):
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calculate_steganalysis_score</span>(orig_np, wm_np):
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34; Calculates Stealth Score using Histogram KL Divergence&#34;&#34;&#34;</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Compute Pixel Density Histograms</span>
@@ -1097,7 +1097,7 @@ To ensure the image defeats automated detection, we calculate the <strong>Stealt
     </main>
     
 <footer class="footer">
-        <span>&copy; 2025 <a href="https://lav-aniya.github.io/">Lav-Aniya&#39;s Site</a></span> · 
+        <span>&copy; 2026 <a href="https://lav-aniya.github.io/">Lav-Aniya&#39;s Site</a></span> · 
 
     <span>
         Powered by
@@ -1138,7 +1138,6 @@ To ensure the image defeats automated detection, we calculate the <strong>Stealt
             }
         });
     });
-
 </script>
 <script>
     var mybutton = document.getElementById("top-link");
@@ -1151,7 +1150,6 @@ To ensure the image defeats automated detection, we calculate the <strong>Stealt
             mybutton.style.opacity = "0";
         }
     };
-
 </script>
 <script>
     document.getElementById("theme-toggle").addEventListener("click", () => {
@@ -1163,55 +1161,56 @@ To ensure the image defeats automated detection, we calculate the <strong>Stealt
             localStorage.setItem("pref-theme", 'dark');
         }
     })
+</script><script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    
+    
+    const isDark = document.body.classList.contains("dark");
 
-</script>
-<script>
-    document.querySelectorAll('pre > code').forEach((codeblock) => {
-        const container = codeblock.parentNode.parentNode;
-
-        const copybutton = document.createElement('button');
-        copybutton.classList.add('copy-code');
-        copybutton.innerHTML = 'copy';
-
-        function copyingDone() {
-            copybutton.innerHTML = 'copied!';
-            setTimeout(() => {
-                copybutton.innerHTML = 'copy';
-            }, 2000);
-        }
-
-        copybutton.addEventListener('click', (cb) => {
-            if ('clipboard' in navigator) {
-                navigator.clipboard.writeText(codeblock.textContent);
-                copyingDone();
-                return;
-            }
-
-            const range = document.createRange();
-            range.selectNodeContents(codeblock);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            try {
-                document.execCommand('copy');
-                copyingDone();
-            } catch (e) { };
-            selection.removeRange(range);
-        });
-
-        if (container.classList.contains("highlight")) {
-            container.appendChild(copybutton);
-        } else if (container.parentNode.firstChild == container) {
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: isDark ? 'dark' : 'default',
+        themeVariables: {
             
-        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
-            
-            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
-        } else {
-            
-            codeblock.parentNode.appendChild(copybutton);
+            primaryTextColor: isDark ? '#e1e1e1' : '#2e2e33',
+            lineColor: isDark ? '#e1e1e1' : '#2e2e33',
+            fontSize: '16px'
         }
     });
 </script>
-</body>
+
+<style>
+    .mermaid {
+        background: transparent !important;
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .mermaid svg {
+     
+    color: var(--primary) !important;
+    }
+
+    .mermaid text {
+        fill: var(--primary) !important;  
+    }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError : false
+        });
+    });
+</script></body>
 
 </html>
