@@ -10,7 +10,7 @@
 <meta name="description" content="An end-to-end autonomous drone navigation system combining 3D Gaussian Splatting, DINOv2 for Visual Place Recognition, and hybrid RRT*/APF planning.">
 <meta name="author" content="Lav-niya">
 <link rel="canonical" href="https://lav-aniya.github.io/projects/auto/">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.26d5b6cac1b97230148b20d08e71d03dfff730d7962098bea581e8b4955b69b7.css" integrity="sha256-JtW2ysG5cjAUiyDQjnHQPf/3MNeWIJi&#43;pYHotJVbabc=" rel="preload stylesheet" as="style">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.5b75fc4d81b3593fb2cf8cdfeefc81b88404f9bc32f49a78a57b10834ba03c22.css" integrity="sha256-W3X8TYGzWT&#43;yz4zf7vyBuIQE&#43;bwy9Jp4pXsQg0ugPCI=" rel="preload stylesheet" as="style">
 <link rel="icon" href="https://lav-aniya.github.io/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="https://lav-aniya.github.io/favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="https://lav-aniya.github.io/favicon-32x32.png">
@@ -128,8 +128,8 @@
   "keywords": [
     "Deep Learning", "Robotics", "Python", "SpatialAI", "Computer Vision", "PyTorch"
   ],
-  "articleBody": "Traditional drone navigation relies heavily on sparse point clouds and GPS. But what if a drone could understand its environment exactly like a human does, through photorealistic memory and real-time visual recognition?\nIn this project, I built an end-to-end autonomous drone stack in AirSim. Instead of standard SLAM, this system uses 3DGS to build a rich offline map. It then leverages DINOv2 (AnyLoc) to create a visual memory bank, allowing the drone to wake up blind, look around, and instantly localize itself. Finally, a hybrid RRT* planning engine and a Dynamic Artificial Potential Field (APF) guide the drone to its target while actively dodging moving obstacles.\nThe Tech Stack\nSimulation: Microsoft AirSim Mapping: 3DGS, Open3D, SciPy(Occupancy Grids) Visual Place Recognition (VPR): PyTorch, DINOv2 (AnyLoc), FAISS Vector Database, Kornia (DISK + LightGlue) Pathfinding: RRT*, B-Spline Smoothing Obstacle Avoidance: DBSCAN Clustering, Dynamic Artificial Potential Field (APF) Your browser does not support the video tag. 1. System Architecture: From Offline Baking to On-Edge Reflexes Building a drone that can navigate autonomously requires splitting the brain into two parts: an offline mapping pipeline that does the heavy lifting, and a lightweight, real-time execution loop onboard the drone.\nhere is a high-level look at how the data flows from raw video to physical motor commands:\nCopy Code Reset View flowchart TB subgraph OFFLINE_PC[\"Phase 1: Mapping \u0026 Training (Offline Prep)\"] direction TB RawData[\"Raw Data: Video + LiDAR + IMU\"] SLAM[\"LiDAR SLAM Processing\"] Traj(\"Drone Trajectory\") GS_Train[\"Gaussian Splatting Training\"] GS_Map[\"Gaussian Splat Map\n(True-Color UPRIGHT)\"] CleanPC[\"Statistical Outlier Removal\n\u0026 Rotation Alignment\"] %% Synthetic Layer Cake Pipeline GridGen[\"Generate 3D Camera Grid\n(Altitude Layers)\"] RenderView[\"Render Synthetic Images\n(Render-and-Retrieve)\"] DinoOffline[\"AnyLoc Feature Extraction\n(DINOv2 + GeM Pooling)\"] VectorDB[(FAISS Vector Database\n'Synthetic Memory Bank')] VoxelGrid[\"3D Voxel Grid\n(occupancy_grid.npy)\"] end subgraph ONLINE_DRONE[\"Phase 2: Autonomous Navigation (Onboard Drone)\"] direction TB Mission[\"Start Mission: Point A -\u003e B\"] subgraph SENSORS[\"Perception Layer\"] direction LR Cam[\"Panoramic Camera\n(6 Rotational Stops)\"] Lidar[\"16-Channel LiDAR\n(100k points/sec)\"] GT[\"AirSim Ground Truth\n(High-Speed Odometry)\"] end subgraph LOCALIZATION[\"Visual Place Recognition (VPR) - 'Wake Up Brain'\"] direction TB LiveDino[\"Live AnyLoc Extraction\n(Cosine Similarity)\"] SearchDB[\"FAISS Nearest Neighbors\n(Top 3 Candidates)\"] DiskLG[\"Fine Verification Tournament\n(DISK + LightGlue \u003e 100 inliers)\"] GCP_Align[\"Manual GCP Alignment\n(AirSim \u003c-\u003e Open3D Shift+Click)\"] CoordMath[\"Rosetta Stone Math\n(Trig Offset + Anchor Matrix)\"] Consensus[\"Weighted Average Consensus\n(Exact 3D Start Node)\"] end subgraph GLOBAL_PLANNER[\"Global Tactical Planner\"] direction TB TacticalUI[\"Open3D Tactical Map\n(Human Operator Goal Selection)\"] PathEngine[\"Multi-Algorithm Engine\n(RRT-Connect / Weighted A*)\"] Smoother[\"Path Smoothing\n(String Pulling + Pigtail Filter + B-Spline)\"] MapTranslator[\"mapping.py\n(1:1 Native Scale Translation)\"] end subgraph LOCAL_PLANNER[\"Local Controller \u0026 Reflex Arc (Live Loop)\"] direction TB VoxelFilter[\"0.5m Voxel Grid Downsampling\"] DBSCAN[\"DBSCAN Clustering\n(eps=0.8, min=2)\"] APF[\"Dynamic APF\n(Static Repulsion + TTC Thresholds)\"] StateMachine[\"State Machine\n(Cruise / Dodge / Land)\"] DodgeLogic[\"Path Resumption\n(Skip 4 Waypoints Ahead)\"] end Motors[\"Motor Output Commands\"] end %% Phase 1 Flow RawData --\u003e SLAM SLAM -- Trajectory x,y,z --\u003e Traj Traj -- Pose + Images --\u003e GS_Train GS_Train -- Rendered Density --\u003e GS_Map GS_Map --\u003e CleanPC %% Synthetic Augmentation Flow CleanPC --\u003e GridGen GridGen --\u003e RenderView RenderView --\u003e DinoOffline DinoOffline -- L2 Normalized Vectors --\u003e VectorDB CleanPC -- Gravity Align \u0026 Bake --\u003e VoxelGrid %% Sensor Flow Mission --\u003e Cam Mission --\u003e Lidar Mission --\u003e GT %% VPR / Localization Flow Cam -- 6 Images --\u003e LiveDino LiveDino -- Query --\u003e SearchDB VectorDB -. Synthetic Memories .-\u003e SearchDB SearchDB -- Coarse Pose --\u003e DiskLG DiskLG -- Verified Image C2W --\u003e CoordMath GCP_Align -. Anchor Matrix .-\u003e CoordMath CoordMath -- Aligned X,Y,Z --\u003e Consensus %% Global Planning Pipeline Consensus -- Visual Map Coordinates --\u003e TacticalUI TacticalUI -- Start + Goal Nodes --\u003e PathEngine VoxelGrid -. Static Collision Data .-\u003e PathEngine PathEngine -- Jagged Voxel Path --\u003e Smoother Smoother -- B-Spline Trajectory --\u003e MapTranslator MapTranslator -- Translated Waypoints --\u003e StateMachine %% Local APF Pipeline Lidar -- Raw Cloud --\u003e VoxelFilter VoxelFilter -- Cleaned Points --\u003e DBSCAN DBSCAN -- Threat Centroids --\u003e APF GT -- Velocity \u0026 Position --\u003e APF APF -- Evasive Vector --\u003e StateMachine StateMachine -- Dodge Executed --\u003e DodgeLogic DodgeLogic -- Return to Path --\u003e StateMachine %% Controller Execution StateMachine -- moveByVelocityAsync\nmoveOnPathAsync --\u003e Motors %% Styling VectorDB:::memory VoxelGrid:::memory Lidar:::safety APF:::safety DBSCAN:::safety VoxelFilter:::safety DodgeLogic:::safety PathEngine:::logic Smoother:::logic StateMachine:::logic DiskLG:::logic CoordMath:::logic Consensus:::logic classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px flowchart TB subgraph OFFLINE_PC[\"Phase 1: Mapping \u0026 Training (Offline Prep)\"] direction TB RawData[\"Raw Data: Video + LiDAR + IMU\"] SLAM[\"LiDAR SLAM Processing\"] Traj(\"Drone Trajectory\") GS_Train[\"Gaussian Splatting Training\"] GS_Map[\"Gaussian Splat Map\n(True-Color UPRIGHT)\"] CleanPC[\"Statistical Outlier Removal\n\u0026 Rotation Alignment\"] %% Synthetic Layer Cake Pipeline GridGen[\"Generate 3D Camera Grid\n(Altitude Layers)\"] RenderView[\"Render Synthetic Images\n(Render-and-Retrieve)\"] DinoOffline[\"AnyLoc Feature Extraction\n(DINOv2 + GeM Pooling)\"] VectorDB[(FAISS Vector Database\n'Synthetic Memory Bank')] VoxelGrid[\"3D Voxel Grid\n(occupancy_grid.npy)\"] end subgraph ONLINE_DRONE[\"Phase 2: Autonomous Navigation (Onboard Drone)\"] direction TB Mission[\"Start Mission: Point A -\u003e B\"] subgraph SENSORS[\"Perception Layer\"] direction LR Cam[\"Panoramic Camera\n(6 Rotational Stops)\"] Lidar[\"16-Channel LiDAR\n(100k points/sec)\"] GT[\"AirSim Ground Truth\n(High-Speed Odometry)\"] end subgraph LOCALIZATION[\"Visual Place Recognition (VPR) - 'Wake Up Brain'\"] direction TB LiveDino[\"Live AnyLoc Extraction\n(Cosine Similarity)\"] SearchDB[\"FAISS Nearest Neighbors\n(Top 3 Candidates)\"] DiskLG[\"Fine Verification Tournament\n(DISK + LightGlue \u003e 100 inliers)\"] GCP_Align[\"Manual GCP Alignment\n(AirSim \u003c-\u003e Open3D Shift+Click)\"] CoordMath[\"Rosetta Stone Math\n(Trig Offset + Anchor Matrix)\"] Consensus[\"Weighted Average Consensus\n(Exact 3D Start Node)\"] end subgraph GLOBAL_PLANNER[\"Global Tactical Planner\"] direction TB TacticalUI[\"Open3D Tactical Map\n(Human Operator Goal Selection)\"] PathEngine[\"Multi-Algorithm Engine\n(RRT-Connect / Weighted A*)\"] Smoother[\"Path Smoothing\n(String Pulling + Pigtail Filter + B-Spline)\"] MapTranslator[\"mapping.py\n(1:1 Native Scale Translation)\"] end subgraph LOCAL_PLANNER[\"Local Controller \u0026 Reflex Arc (Live Loop)\"] direction TB VoxelFilter[\"0.5m Voxel Grid Downsampling\"] DBSCAN[\"DBSCAN Clustering\n(eps=0.8, min=2)\"] APF[\"Dynamic APF\n(Static Repulsion + TTC Thresholds)\"] StateMachine[\"State Machine\n(Cruise / Dodge / Land)\"] DodgeLogic[\"Path Resumption\n(Skip 4 Waypoints Ahead)\"] end Motors[\"Motor Output Commands\"] end %% Phase 1 Flow RawData --\u003e SLAM SLAM -- Trajectory x,y,z --\u003e Traj Traj -- Pose + Images --\u003e GS_Train GS_Train -- Rendered Density --\u003e GS_Map GS_Map --\u003e CleanPC %% Synthetic Augmentation Flow CleanPC --\u003e GridGen GridGen --\u003e RenderView RenderView --\u003e DinoOffline DinoOffline -- L2 Normalized Vectors --\u003e VectorDB CleanPC -- Gravity Align \u0026 Bake --\u003e VoxelGrid %% Sensor Flow Mission --\u003e Cam Mission --\u003e Lidar Mission --\u003e GT %% VPR / Localization Flow Cam -- 6 Images --\u003e LiveDino LiveDino -- Query --\u003e SearchDB VectorDB -. Synthetic Memories .-\u003e SearchDB SearchDB -- Coarse Pose --\u003e DiskLG DiskLG -- Verified Image C2W --\u003e CoordMath GCP_Align -. Anchor Matrix .-\u003e CoordMath CoordMath -- Aligned X,Y,Z --\u003e Consensus %% Global Planning Pipeline Consensus -- Visual Map Coordinates --\u003e TacticalUI TacticalUI -- Start + Goal Nodes --\u003e PathEngine VoxelGrid -. Static Collision Data .-\u003e PathEngine PathEngine -- Jagged Voxel Path --\u003e Smoother Smoother -- B-Spline Trajectory --\u003e MapTranslator MapTranslator -- Translated Waypoints --\u003e StateMachine %% Local APF Pipeline Lidar -- Raw Cloud --\u003e VoxelFilter VoxelFilter -- Cleaned Points --\u003e DBSCAN DBSCAN -- Threat Centroids --\u003e APF GT -- Velocity \u0026 Position --\u003e APF APF -- Evasive Vector --\u003e StateMachine StateMachine -- Dodge Executed --\u003e DodgeLogic DodgeLogic -- Return to Path --\u003e StateMachine %% Controller Execution StateMachine -- moveByVelocityAsync\nmoveOnPathAsync --\u003e Motors %% Styling VectorDB:::memory VoxelGrid:::memory Lidar:::safety APF:::safety DBSCAN:::safety VoxelFilter:::safety DodgeLogic:::safety PathEngine:::logic Smoother:::logic StateMachine:::logic DiskLG:::logic CoordMath:::logic Consensus:::logic classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px (Note: The system is designed so that heavy computations like vector database generation and collision grid inflation happen entirely offline. The live drone only preforms fast matrix multiplications, inner product searchers, and lightweight clustering)\nPhase 1: The Memory Bank and Voxel grid Before drone can fly autonomously, it needs two things: a physical understanding of the world to avoid crashing and a visual memory to know where it is without GPS.\nFrom Gaussian Splats to Collision Grids Why 3DGS? Traditional photogrammetry generates point clouds and textured meshes. While great for collision avoidance, meshes often produce “tearing” or artifacts when rendering novel views. 3DGS represents the scene as continuous, translucent mathematical ellipsoids. This allows for photorealistic novel view synthesis which is absolutely critical for generating accurate synthetic training data for the drone’s vision system.\nFirst, I extracted the raw point cloud from 3DGS model. To extract the true base colors of the scene, I decoded the zeroth degree sphereical harmonics $(S H_0)$: $$C_RGB = SH_0 \\times 0.282094 + 0.5$$\nOnce extracted and rotated into a standard gravity-aligned coordinate system, the continuous points are quantized into a discrete 3D occupancy matrix (a voxel grid) using a 0.2m resolution. To map a physical continuous coordinate (P) to a discrete grid index, I applied:\n$$Index = \\left( \\frac{P - P_{min}}{V_size}\\right)$$\nThe Safety buffer: Drones have physical wingspans. To prevent the center of the drone from pahtfinding too close to a wall, I applied a 3D binary dialation using scipy.ndimage. This “inflates” the walls of the voxel grid by 0.5 meters, creating an invisible safety buffer.\nVisual Place Recognition: The AnyLoc method When the drone spawns, it is completely blind. It takes panoramic photos of its surroundings and must mathematically deduce its X, Y, Z coordinates.\nWhy DINOv2 + AnyLoc over traditional SLAM or NetVLAD? Traditional local feature matchers (Like SIFT or ORB) are highly susceptible to lighting changes, shadows, and seasonal shifts. NetVLAD is robust but requires heavey, domain-specific training. I utilized the AnyLoc method, leveraging Meta’s DINOv2 vision model. Because DINOv2 understands deep semantic structures, it provides zero-shot robustness. It recognizes a building based on its structural essence, regardless of the simulator’s lighting or sun angle.\nTo build the database, I programmed a virtual “lawnmower” path through 3DGS model rendering thousands of synthetic images a tvarious coordinates and altitudes.\nEach image is passed through DINOv2 to extract patch tokens. Instead of just taking the average of these tokens, I applied Generalized Mean (GeM) Pooling:\n$$f = \\left( \\frac{1}{N} \\sum_{i=1}^{N} x^{p}_{i} \\right)^{\\frac{1}{p}} $$\naverage pooling (p=1) dilutes distinct visual landmarks, while Max pooling $(p \\rightarrow \\infty)$ is too harsh and loses spatial context. By setting $p=3.0$, GeM pooling perfectly bridges this gap, it focuses the neural network’s attention on distinct structural landamarks (like the corner of a roof or a specific window) while retaining enough context of the surrounding wall.\n# Extract DINOv2 patch tokens ret = dinov2.forward_features(img_tensor) patches = ret['x_norm_patchtokens'] # Apply Generalized Mean (GeM) Pooling (p=3.0) patches_pow = torch.pow(patches.clamp(min=1e-6), p) gem_pool = torch.mean(patches_pow, dim=1) anyloc_features = torch.pow(gem_pool, 1.0/p) # L2 Normalize for the FAISS Index embedding = torch.nn.functional.normalize(anyloc_features, p=2, dim=1) The FAISS Vector Database The resulting 384-dimensional GeM embeddings are fed into a FAISS IndexFlatIPS (inner product) vector database. Because I explicitly L2-normalized the feature vectors in PyTorch before indexing them, the FAISS inner product mathematically computes the Cosine Similarity.\n$$ S_{C}(A,B) = \\frac{A . B}{\\parallel A \\parallel \\parallel B \\parallel} $$\nThis approach allows the drone to compare a live, real-time photo against thousands of synthetic memory bank photos in milliseconds, instantly finding its coarse neighborhood in the map.\nPhase 2: Live Navigation \u0026 Vision System When the drone spawns into the simulation, it is completely blind. It has no GPS and no initial starting coordinates. It must “wake up” look around, and mathematically deduce its location in the 3D map using a Coarse-to-Fine Visual Place Recognition (VPR) pipeline.\nThe Coarse-to-Fine Pipeline (DISK + LightGlue) The drone rotates and snaps siz panoramic images. Each image is processed through the VPR system.\nCoarse Search: The live image is passed through DINOv2. The resulting GeM-pooled embedding is queried against the offline FAISS Vector Database, retrieving the top 3 nearest synthetic memory bank images.\nFine Verification: Coarse image retrieval is not geometrically exact enough for a drone. To pinpoint the exact location, I pass the live image and the top synthetic candidates through DISK (a local feature extractor) and LightGlue (state of the art neural matcher).\nWhy DISK and LightGlue? LightGlue explicitly rejects unmatchable keypoints and returns a highly accurate geometric verification (inlier count). If the inlier count is below 100, the drone rejects the view as too vague.\nThe Rosetta Stone: Rigid Body Transformations Once a synthetic image is verified, the drone knows where the camera was in the map’s coordinate system. But the drone flies in AirSim’s physical coordinate system (NED: North-East-Down). I built a manual Groud Control Point (GCP) anchoring script to calculate the scale and translation between these two worlds.\nTo prevent the map from accidently sloping or tilting, I implemented a “Flat Gravity Anchor”. By mathematically forcing the middle row of the rotation matrix to zero out pitch and roll, the drone locks onto yaw difference $(\\theta)$ strictly on the XZ plane:\n$$ R_{upright} = \\begin{bmatrix} \\cos(\\theta) \u0026 0 \u0026 -\\sin(\\theta) \\\\ 0 \u0026 1 \u0026 0 \\\\ \\sin(\\theta) \u0026 0 \u0026 \\cos(\\theta) \\end{bmatrix} $$\nSensor Fusion: Weighted Consensus Because the drone takes six photos, it might find multiple succesful localization. Instead of simple average, the drone uses the LightGlue inlier count (W) as a confidence weight to calculate its final starting coordinate:\n$$ X_{final} = \\frac{\\sum (X_{i} \\times W_{i})}{\\sum W_{i}} $$\nA camera starting at a highly recongnizable building (500 inliers) mathematically overpowers a camera staring at a blank path of grass (105 inliers).\nHuman-in-the-loop: Open3D Tactical Map Before generating a flight path, the system opens a real-time Open3D tactical interface. The operator uses W/A/S/D/E/Q keys to position a blue sphere in 3D space. To prevent user error, a real time keyCallback runs the coordinates through physical_to_voxel grid. If the user places the target inside a building, the sphere turns RED and physically locks out the Spacebar authorization key. Only when the sphere is in sage airspace (Blue) can the flight plan be executed.\nYour browser does not support the video tag. Global Tactical Plannar Once the drone knows where it is, it needs to plot a course through the 3D voxel grid. For exploring wide-open 3D airspace rapidly, a standard grid-based searches (like A*) check far too many empty nodes, and standard RRT algorithms create highly suboptimal, wandering paths.\nTo solve this, I implemented RRT* (RRT-Star), an asymptotically optimal sampling-based plannar.\nTree Rewiring and Cost Optimization Unlike standard RRT, which locks in the first path it finds, RRT* actively optimizes the flight path distance during the search phase.\nWhenever a new 3D node is sampled and added to the tree, the algorithm searches within a designated radius for neighboring nodes. It calculates the Eculidean cost to route through the new node. If the new route is cheaper (shorter) than a neighbor’s current path to the start, the algorithm mathematically rewires the tree.\nThis dynamic rewiring acts as an algorithmic string-puller, straightening out the jagged branches of the search tree in real-time before the final path is even selected.\n# Check if the newly sampled node offers a cheaper path for its neighbors for near_node in near_nodes: potential_cost = new_node.cost + get_distance(new_node, near_node) if potential_cost \u003c near_node.cost: # Cast a 3D ray to ensure the new optimized shortcut doesn't clip a building if not check_collision_3d(new_node, near_node, grid): near_node.parent = new_node near_node.cost = potential_cost 3D Raycast Collision Checking To ensure branches don’t intersect the collision grid, I built a custom check_collison_3D function. It calculates the exact 3D distance between two nodes and samples points along the connecting vector at 0.5 voxel intervals. This guarantees the algorithm never accidentally jumps over thin walls or power lines.\nB-Spline Trajectory Smoothing: While RRT* guarantees the shortest distance, the path still consists of straight lines and sharp corners. To translate this into a realistic quadcopter trajectory, the system applies three layers of smoothing:\nString Pulling: Raycasting between distant waypoints to delete redundant intermediate nodes. “Pigtail” Filter: A custom spatial filter that removes clustered waypoints (distance\u003c0,8m) to prevent the math from creating physical loops or overshoots. Quadratic B-Splines: Using scipy.interpolate.splprep (k=2) to bend the remaining sharp corners into a continuously smooth, aerodynamic flight curve. Local Reflexes: Dynamic Obstacle Avoidance A global path is useless if a dynamic obstacle moves in fromt of the drone. I built a real-time Dynamic Artificial Potential Field (APF) that runs asynchronously alongside the main flight loop.\nLiDAR Voxel Downsampling and DBSCAN Running clustering algorithms on 100000 raw LiDAR points per second will crash a Python control loop. To optimize this, the raw point cloud is first quantized into a 0.5m discrete grid. By keeping only one point per voxel block, the data footprint is reduced by 90% without losing spatial boundaries. This ultra-lightweight point cloud is then fed into DBSCAN to calculate the physical centroids of incoming threats.\nEgo-Motion Compensation and Time-to-Collision (TTC) Kinematics A classic problem in obstacle avoidance is ego-motion: if a drone flies forward at 5m/s, every static tree appears to be flying toward the sensor at 5m/s. To prevent the APF from panic-dodging static walls, the drone must mathematically cancel out its own movement.\nI implemented rigid body kinematic to isolate true moving threats.\nThe system reads the drone’s high speed odometry (linear and angular velocity). It rotates the world velocity into the LiDAR’s body frame using the drone’s current yaw. It calculates the false speed caused by the drone’s rotation using the cross product: $v_{rot}=w /times r$. It subtracts the drone’s ego-motion from the obstacle’s apparent velocity. If the resulting true velocity is near zero, the object is static and is ignored. If the object is truly moving toward the drone, the APF scales the repulsive force ($F_{repulsive}$) inversely by the Time-To-Collision (TTC).\n$$ F_{repulsive} = \\frac{K_{repulsive}}{d \\times TTC} $$\nYour browser does not support the video tag. This means the drone smoothly glides past static buildings, but will violently brake and snap away from a moving target (like another drone).\n# Grab drone kinematics and rotate World Velocity into the LiDAR's Body Frame v_body_x = v_world.x_val * math.cos(yaw) + v_world.y_val * math.sin(yaw) v_body_y = -v_world.x_val * math.sin(yaw) + v_world.y_val * math.cos(yaw) drone_linear_vel = np.array([v_body_x, v_body_y, v_world.z_val]) # Calculate false speed caused by drone rotation (v = w x r) drone_angular_vel = np.array([w_body.x_val, w_body.y_val, w_body.z_val]) rotational_offset = np.cross(drone_angular_vel, curr_centroid) # Cancel out ego-motion to find the TRUE object velocity safe_dt = max(dt, 0.05) # Guardrail against divide-by-zero explosions apparent_velocity = (curr_centroid - last_centroid) / safe_dt true_obj_vel = apparent_velocity + drone_linear_vel + rotational_offset dist = np.linalg.norm(curr_centroid) # Ignore distant objects (\u003e10m) and static objects (true speed \u003c 2.0m/s) if dist \u003c= 10.0 and np.linalg.norm(true_obj_vel) \u003e= 2.0: # Threat is truly moving Execute Dynamic TTC Math dir_to_drone = -curr_centroid / dist closing_speed = np.dot(apparent_velocity, dir_to_drone) if closing_speed \u003e 0.1: ttc = dist / closing_speed if ttc \u003c TTC_THRESHOLD: # Scale repulsive force inversely by Time-To-Collision force_dir = -curr_centroid / dist force_mag = REPULSIVE_CONSTANT / (dist * ttc) total_repulsive_force += force_dir * force_mag threat_detected = True Results, Ground Truth Benchmarking and Future Work Because this was built in AirSim, I was able to query the Unreal Engine physics simulator for the exact real-world (X, Y, Z) coordinates of the drone at the exact moment the vision system made its guess. By translating the Neural Map coordinates into AirSim Physics coordinates, I calculated the absolute 3D Euclidean error distance.\nPerformance Highlights:\nLocalization accuracay: The DISK + LightGlue consensus consistently localized the drone with sub-meter accuracy (often within 0.3m to 0.8m of the unreal engine ground truth), even when spawned in visually ambiguous areas. Path Planning Speed: RRT-Connect generated 3D voxel paths spanning 40+ meters through complex building layouts in under 1.5 seconds. Evasive Maneuvers: The Dynamic APF successfully overrode the global trajectory, violently braking the drone to avoid simulated physics boxed dropped directly onto the flight path, before smoothly returning to the B-spline curve. Real-World Edge Deployment (Future architecture) While this project runs monolithically alongside a simulator, the system was designed with physical “Edge AI” deployment in mind. To move this to a real drone, the UI and the “Brain” must be decoupled into a client-Server model.\nEdge Server (The Drone): The heavy computations (DINOv2, FAISS, RRT-Connect, APF) would be containerized via Docker and deployed onto an onboard companion computer. For high-end performance, an NVIDIA Jetson Orin Nano using TensorRT (FP16) provides robust CUDA acceleration. However, the architecture is flexible; for a budget-friendly build, edge-inference can be offloaded to cheaper alternatives like an Orange Pi 5 (RK3588 NPU) or a Raspberry Pi 5 paired with a Hailo-8 or Google Coral AI accelerator at a fraction of the cost. Client UI (Ground Control Station): The Open3D Tactical Map would run on an operator’s laptop or tablet (e.g., via ROS2 RViz or a web dashboard). The operator selects the Goal Sphere on the tablet, and a lightweight JSON payload of the (X, Y, Z) coordinates is sent to the drone via 4F LTE or RF telemetry. The drone executes the mission autonomously, relying strictly on its onboard sensros to survive. ",
-  "wordCount" : "3392",
+  "articleBody": "Traditional drone navigation relies heavily on sparse point clouds and GPS. But what if a drone could understand its environment exactly like a human does, through photorealistic memory and real-time visual recognition?\nIn this project, I built an end-to-end autonomous drone stack in AirSim. Instead of standard SLAM, this system uses 3DGS to build a rich offline map. It then leverages DINOv2 (AnyLoc) to create a visual memory bank, allowing the drone to wake up blind, look around, and instantly localize itself. Finally, a hybrid RRT* planning engine and a Dynamic Artificial Potential Field (APF) guide the drone to its target while actively dodging moving obstacles.\nThe Tech Stack\nSimulation: Microsoft AirSim Mapping: 3DGS, Open3D, SciPy(Occupancy Grids) Visual Place Recognition (VPR): PyTorch, DINOv2 (AnyLoc), FAISS Vector Database, Kornia (DISK + LightGlue) Pathfinding: RRT*, B-Spline Smoothing Obstacle Avoidance: DBSCAN Clustering, Dynamic Artificial Potential Field (APF) Your browser does not support the video tag. 1. System Architecture: From Offline Baking to On-Edge Reflexes Building a drone that can navigate autonomously requires splitting the brain into two parts: an offline mapping pipeline that does the heavy lifting, and a lightweight, real-time execution loop onboard the drone.\nhere is a high-level look at how the data flows from raw video to physical motor commands:\nCopy Code Reset View flowchart TB subgraph OFFLINE_PC[\"Phase 1: Mapping \u0026 Training (Offline Prep)\"] direction TB RawData[\"Raw Data: Video + LiDAR + IMU\"] SLAM[\"LiDAR SLAM Processing\"] Traj(\"Drone Trajectory\") GS_Train[\"Gaussian Splatting Training\"] GS_Map[\"Gaussian Splat Map\n(True-Color UPRIGHT)\"] GridGen[\"Generate 3D Camera Grid\n(Altitude Layers)\"] RenderView[\"Render Synthetic Images\n(Render-and-Retrieve)\"] DinoOffline[\"AnyLoc Feature Extraction\n(DINOv2 + GeM Pooling)\"] %% FIXED: Standard cylinder syntax VectorDB[(\"FAISS Vector Database\n'Synthetic Memory Bank'\")] VoxelGrid[\"3D Voxel Grid\n(occupancy_grid.npy)\"] end subgraph ONLINE_DRONE[\"Phase 2: Autonomous Navigation (Onboard Drone)\"] direction TB Mission[\"Start Mission: Point A -\u003e B\"] %% FIXED: Physically nesting the subgraphs inside Phase 2 subgraph SENSORS[\"Perception Layer\"] direction LR Cam[\"Panoramic Camera\n(6 Rotational Stops)\"] Lidar[\"16-Channel LiDAR\n(100k points/sec)\"] GT[\"AirSim Ground Truth\n(High-Speed Odometry)\"] end subgraph LOCALIZATION[\"Visual Place Recognition (VPR) - 'Wake Up Brain'\"] direction TB LiveDino[\"Live AnyLoc Extraction\n(Cosine Similarity)\"] SearchDB[\"FAISS Nearest Neighbors\n(Top 3 Candidates)\"] DiskLG[\"Fine Verification Tournament\n(DISK + LightGlue \u003e 100 inliers)\"] CoordMath[\"Rosetta Stone Math\n(Trig Offset + Anchor Matrix + Spawn Calibration)\"] Consensus[\"Weighted Average Consensus\n(Exact 3D Start Node)\"] end subgraph GLOBAL_PLANNER[\"Global Tactical Planner\"] direction TB TacticalUI[\"Open3D Tactical Map\n(Human Operator Goal Selection)\"] RRT[\"3D RRT* Algorithm\n(Cost-Optimized Rewiring)\"] Smoother[\"Path Smoothing\n(String Pulling + Pigtail Filter B-Spline)\"] MapTranslator[\"mapping.py\n(1:1 Native Scale Translation)\"] end subgraph LOCAL_PLANNER[\"Local Controller \u0026 Reflex Arc (Live Loop)\"] direction TB VoxelFilter[\"0.5m Voxel Grid Downsampling\"] DBSCAN[\"DBSCAN Clustering\n(eps=0.8, min=2)\"] APF[\"Dynamic APF\n(Ego-Motion Compensation + Noise Filter)\"] StateMachine[\"State Machine\n(Cruise / Dodge / Land)\"] DodgeLogic[\"Path Resumption\n(Skip 4 Waypoints Ahead)\"] end Motors[\"Motor Output Commands\"] end %% Edge Connections RawData --\u003e SLAM SLAM -- Trajectory x,y,z --\u003e Traj Traj -- Pose + Images --\u003e GS_Train GS_Train -- Rendered Density --\u003e GS_Map GS_Map --\u003e GridGen GridGen --\u003e RenderView RenderView --\u003e DinoOffline DinoOffline -- L2 Normalized Vectors --\u003e VectorDB GS_Map -- Gravity Align \u0026 Bake --\u003e VoxelGrid Mission --\u003e Cam \u0026 Lidar \u0026 GT Cam -- 6 Images --\u003e LiveDino LiveDino -- Query --\u003e SearchDB VectorDB -. Synthetic Memories .-\u003e SearchDB SearchDB -- Coarse Pose --\u003e DiskLG DiskLG -- Verified Image C2W --\u003e CoordMath CoordMath -- Aligned X,Y,Z --\u003e Consensus Consensus -- Visual Map Coordinates --\u003e TacticalUI TacticalUI -- Start + Goal Nodes --\u003e RRT VoxelGrid -. Static Collision Data .-\u003e RRT RRT -- Jagged Voxel Path --\u003e Smoother Smoother -- \"B-Spline Trajectory\" --\u003e MapTranslator MapTranslator -- Translated Waypoints --\u003e StateMachine Lidar -- Raw Cloud --\u003e VoxelFilter VoxelFilter -- Cleaned Points --\u003e DBSCAN DBSCAN -- Threat Centroids --\u003e APF GT -- Linear/Angular Vel \u0026 Position --\u003e APF APF -- Evasive Vector --\u003e StateMachine StateMachine -- Dodge Executed --\u003e DodgeLogic DodgeLogic -- Return to Path --\u003e StateMachine StateMachine -- moveByVelocityAsync\nmoveOnPathAsync --\u003e Motors %% Styling VectorDB:::memory VoxelGrid:::memory Lidar:::safety DiskLG:::logic CoordMath:::logic Consensus:::logic RRT:::logic Smoother:::logic VoxelFilter:::safety DBSCAN:::safety APF:::safety StateMachine:::logic DodgeLogic:::safety %% Make sure text stays black classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000 classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000000 classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px,color:#000000 flowchart TB subgraph OFFLINE_PC[\"Phase 1: Mapping \u0026 Training (Offline Prep)\"] direction TB RawData[\"Raw Data: Video + LiDAR + IMU\"] SLAM[\"LiDAR SLAM Processing\"] Traj(\"Drone Trajectory\") GS_Train[\"Gaussian Splatting Training\"] GS_Map[\"Gaussian Splat Map\n(True-Color UPRIGHT)\"] GridGen[\"Generate 3D Camera Grid\n(Altitude Layers)\"] RenderView[\"Render Synthetic Images\n(Render-and-Retrieve)\"] DinoOffline[\"AnyLoc Feature Extraction\n(DINOv2 + GeM Pooling)\"] %% FIXED: Standard cylinder syntax VectorDB[(\"FAISS Vector Database\n'Synthetic Memory Bank'\")] VoxelGrid[\"3D Voxel Grid\n(occupancy_grid.npy)\"] end subgraph ONLINE_DRONE[\"Phase 2: Autonomous Navigation (Onboard Drone)\"] direction TB Mission[\"Start Mission: Point A -\u003e B\"] %% FIXED: Physically nesting the subgraphs inside Phase 2 subgraph SENSORS[\"Perception Layer\"] direction LR Cam[\"Panoramic Camera\n(6 Rotational Stops)\"] Lidar[\"16-Channel LiDAR\n(100k points/sec)\"] GT[\"AirSim Ground Truth\n(High-Speed Odometry)\"] end subgraph LOCALIZATION[\"Visual Place Recognition (VPR) - 'Wake Up Brain'\"] direction TB LiveDino[\"Live AnyLoc Extraction\n(Cosine Similarity)\"] SearchDB[\"FAISS Nearest Neighbors\n(Top 3 Candidates)\"] DiskLG[\"Fine Verification Tournament\n(DISK + LightGlue \u003e 100 inliers)\"] CoordMath[\"Rosetta Stone Math\n(Trig Offset + Anchor Matrix + Spawn Calibration)\"] Consensus[\"Weighted Average Consensus\n(Exact 3D Start Node)\"] end subgraph GLOBAL_PLANNER[\"Global Tactical Planner\"] direction TB TacticalUI[\"Open3D Tactical Map\n(Human Operator Goal Selection)\"] RRT[\"3D RRT* Algorithm\n(Cost-Optimized Rewiring)\"] Smoother[\"Path Smoothing\n(String Pulling + Pigtail Filter B-Spline)\"] MapTranslator[\"mapping.py\n(1:1 Native Scale Translation)\"] end subgraph LOCAL_PLANNER[\"Local Controller \u0026 Reflex Arc (Live Loop)\"] direction TB VoxelFilter[\"0.5m Voxel Grid Downsampling\"] DBSCAN[\"DBSCAN Clustering\n(eps=0.8, min=2)\"] APF[\"Dynamic APF\n(Ego-Motion Compensation + Noise Filter)\"] StateMachine[\"State Machine\n(Cruise / Dodge / Land)\"] DodgeLogic[\"Path Resumption\n(Skip 4 Waypoints Ahead)\"] end Motors[\"Motor Output Commands\"] end %% Edge Connections RawData --\u003e SLAM SLAM -- Trajectory x,y,z --\u003e Traj Traj -- Pose + Images --\u003e GS_Train GS_Train -- Rendered Density --\u003e GS_Map GS_Map --\u003e GridGen GridGen --\u003e RenderView RenderView --\u003e DinoOffline DinoOffline -- L2 Normalized Vectors --\u003e VectorDB GS_Map -- Gravity Align \u0026 Bake --\u003e VoxelGrid Mission --\u003e Cam \u0026 Lidar \u0026 GT Cam -- 6 Images --\u003e LiveDino LiveDino -- Query --\u003e SearchDB VectorDB -. Synthetic Memories .-\u003e SearchDB SearchDB -- Coarse Pose --\u003e DiskLG DiskLG -- Verified Image C2W --\u003e CoordMath CoordMath -- Aligned X,Y,Z --\u003e Consensus Consensus -- Visual Map Coordinates --\u003e TacticalUI TacticalUI -- Start + Goal Nodes --\u003e RRT VoxelGrid -. Static Collision Data .-\u003e RRT RRT -- Jagged Voxel Path --\u003e Smoother Smoother -- \"B-Spline Trajectory\" --\u003e MapTranslator MapTranslator -- Translated Waypoints --\u003e StateMachine Lidar -- Raw Cloud --\u003e VoxelFilter VoxelFilter -- Cleaned Points --\u003e DBSCAN DBSCAN -- Threat Centroids --\u003e APF GT -- Linear/Angular Vel \u0026 Position --\u003e APF APF -- Evasive Vector --\u003e StateMachine StateMachine -- Dodge Executed --\u003e DodgeLogic DodgeLogic -- Return to Path --\u003e StateMachine StateMachine -- moveByVelocityAsync\nmoveOnPathAsync --\u003e Motors %% Styling VectorDB:::memory VoxelGrid:::memory Lidar:::safety DiskLG:::logic CoordMath:::logic Consensus:::logic RRT:::logic Smoother:::logic VoxelFilter:::safety DBSCAN:::safety APF:::safety StateMachine:::logic DodgeLogic:::safety %% Make sure text stays black classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000 classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000000 classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px,color:#000000 (Note: The system is designed so that heavy computations like vector database generation and collision grid inflation happen entirely offline. The live drone only preforms fast matrix multiplications, inner product searchers, and lightweight clustering)\nPhase 1: The Memory Bank and Voxel grid Before drone can fly autonomously, it needs two things: a physical understanding of the world to avoid crashing and a visual memory to know where it is without GPS.\nFrom Gaussian Splats to Collision Grids\nYour browser does not support the video tag. Why 3DGS? Traditional photogrammetry generates point clouds and textured meshes. While great for collision avoidance, meshes often produce “tearing” or artifacts when rendering novel views. 3DGS represents the scene as continuous, translucent mathematical ellipsoids. This allows for photorealistic novel view synthesis which is absolutely critical for generating accurate synthetic training data for the drone’s vision system.\nFirst, I extracted the raw point cloud from 3DGS model. To extract the true base colors of the scene, I decoded the zeroth degree sphereical harmonics $(S H_0)$: $$C_{RGB} = SH_0 \\times 0.282094 + 0.5$$\nOnce extracted and rotated into a standard gravity-aligned coordinate system, the continuous points are quantized into a discrete 3D occupancy matrix (a voxel grid) using a 0.2m resolution. To map a physical continuous coordinate (P) to a discrete grid index, I applied:\n$$Index = \\left( \\frac{P - P_{min}}{V_size}\\right)$$\nThe Safety buffer: Drones have physical wingspans. To prevent the center of the drone from pahtfinding too close to a wall, I applied a 3D binary dialation using scipy.ndimage. This “inflates” the walls of the voxel grid by 0.5 meters, creating an invisible safety buffer.\nVisual Place Recognition: The AnyLoc method When the drone spawns, it is completely blind. It takes panoramic photos of its surroundings and must mathematically deduce its X, Y, Z coordinates.\nWhy DINOv2 + AnyLoc over traditional SLAM or NetVLAD? Traditional local feature matchers (Like SIFT or ORB) are highly susceptible to lighting changes, shadows, and seasonal shifts. NetVLAD is robust but requires heavey, domain-specific training. I utilized the AnyLoc method, leveraging Meta’s DINOv2 vision model. Because DINOv2 understands deep semantic structures, it provides zero-shot robustness. It recognizes a building based on its structural essence, regardless of the simulator’s lighting or sun angle.\nTo build the database, I programmed a virtual “lawnmower” path through 3DGS model rendering thousands of synthetic images a tvarious coordinates and altitudes.\nEach image is passed through DINOv2 to extract patch tokens. Instead of just taking the average of these tokens, I applied Generalized Mean (GeM) Pooling:\n$$f = \\left( \\frac{1}{N} \\sum_{i=1}^{N} x^{p}_{i} \\right)^{\\frac{1}{p}} $$\naverage pooling (p=1) dilutes distinct visual landmarks, while Max pooling $(p \\rightarrow \\infty)$ is too harsh and loses spatial context. By setting $p=3.0$, GeM pooling perfectly bridges this gap, it focuses the neural network’s attention on distinct structural landamarks (like the corner of a roof or a specific window) while retaining enough context of the surrounding wall.\n# Extract DINOv2 patch tokens ret = dinov2.forward_features(img_tensor) patches = ret['x_norm_patchtokens'] # Apply Generalized Mean (GeM) Pooling (p=3.0) patches_pow = torch.pow(patches.clamp(min=1e-6), p) gem_pool = torch.mean(patches_pow, dim=1) anyloc_features = torch.pow(gem_pool, 1.0/p) # L2 Normalize for the FAISS Index embedding = torch.nn.functional.normalize(anyloc_features, p=2, dim=1) The FAISS Vector Database The resulting 384-dimensional GeM embeddings are fed into a FAISS IndexFlatIPS (inner product) vector database. Because I explicitly L2-normalized the feature vectors in PyTorch before indexing them, the FAISS inner product mathematically computes the Cosine Similarity.\n$$ S_{C}(A,B) = \\frac{A . B}{\\parallel A \\parallel \\parallel B \\parallel} $$\nThis approach allows the drone to compare a live, real-time photo against thousands of synthetic memory bank photos in milliseconds, instantly finding its coarse neighborhood in the map.\nPhase 2: Live Navigation \u0026 Vision System When the drone spawns into the simulation, it is completely blind. It has no GPS and no initial starting coordinates. It must “wake up” look around, and mathematically deduce its location in the 3D map using a Coarse-to-Fine Visual Place Recognition (VPR) pipeline.\nThe Coarse-to-Fine Pipeline (DISK + LightGlue) The drone rotates and snaps siz panoramic images. Each image is processed through the VPR system.\nCoarse Search: The live image is passed through DINOv2. The resulting GeM-pooled embedding is queried against the offline FAISS Vector Database, retrieving the top 3 nearest synthetic memory bank images.\nFine Verification: Coarse image retrieval is not geometrically exact enough for a drone. To pinpoint the exact location, I pass the live image and the top synthetic candidates through DISK (a local feature extractor) and LightGlue (state of the art neural matcher).\nWhy DISK and LightGlue? LightGlue explicitly rejects unmatchable keypoints and returns a highly accurate geometric verification (inlier count). If the inlier count is below 100, the drone rejects the view as too vague.\nThe Rosetta Stone: Rigid Body Transformations Once a synthetic image is verified, the drone knows where the camera was in the map’s coordinate system. But the drone flies in AirSim’s physical coordinate system (NED: North-East-Down). I built a manual Groud Control Point (GCP) anchoring script to calculate the scale and translation between these two worlds.\nTo prevent the map from accidently sloping or tilting, I implemented a “Flat Gravity Anchor”. By mathematically forcing the middle row of the rotation matrix to zero out pitch and roll, the drone locks onto yaw difference $(\\theta)$ strictly on the XZ plane:\n$$ R_{upright} = \\begin{bmatrix} \\cos(\\theta) \u0026 0 \u0026 -\\sin(\\theta) \\\\ 0 \u0026 1 \u0026 0 \\\\ \\sin(\\theta) \u0026 0 \u0026 \\cos(\\theta) \\end{bmatrix} $$\nSensor Fusion: Weighted Consensus Because the drone takes six photos, it might find multiple succesful localization. Instead of simple average, the drone uses the LightGlue inlier count (W) as a confidence weight to calculate its final starting coordinate:\n$$ X_{final} = \\frac{\\sum (X_{i} \\times W_{i})}{\\sum W_{i}} $$\nA camera starting at a highly recongnizable building (500 inliers) mathematically overpowers a camera staring at a blank path of grass (105 inliers).\nHuman-in-the-loop: Open3D Tactical Map Before generating a flight path, the system opens a real-time Open3D tactical interface. The operator uses W/A/S/D/E/Q keys to position a blue sphere in 3D space. To prevent user error, a real time keyCallback runs the coordinates through physical_to_voxel grid. If the user places the target inside a building, the sphere turns RED and physically locks out the Spacebar authorization key. Only when the sphere is in sage airspace (Blue) can the flight plan be executed.\nYour browser does not support the video tag. Global Tactical Plannar Once the drone knows where it is, it needs to plot a course through the 3D voxel grid. For exploring wide-open 3D airspace rapidly, a standard grid-based searches (like A*) check far too many empty nodes, and standard RRT algorithms create highly suboptimal, wandering paths.\nTo solve this, I implemented RRT* (RRT-Star), an asymptotically optimal sampling-based plannar.\nTree Rewiring and Cost Optimization Unlike standard RRT, which locks in the first path it finds, RRT* actively optimizes the flight path distance during the search phase.\nWhenever a new 3D node is sampled and added to the tree, the algorithm searches within a designated radius for neighboring nodes. It calculates the Eculidean cost to route through the new node. If the new route is cheaper (shorter) than a neighbor’s current path to the start, the algorithm mathematically rewires the tree.\nThis dynamic rewiring acts as an algorithmic string-puller, straightening out the jagged branches of the search tree in real-time before the final path is even selected.\n# Check if the newly sampled node offers a cheaper path for its neighbors for near_node in near_nodes: potential_cost = new_node.cost + get_distance(new_node, near_node) if potential_cost \u003c near_node.cost: # Cast a 3D ray to ensure the new optimized shortcut doesn't clip a building if not check_collision_3d(new_node, near_node, grid): near_node.parent = new_node near_node.cost = potential_cost 3D Raycast Collision Checking To ensure branches don’t intersect the collision grid, I built a custom check_collison_3D function. It calculates the exact 3D distance between two nodes and samples points along the connecting vector at 0.5 voxel intervals. This guarantees the algorithm never accidentally jumps over thin walls or power lines.\nB-Spline Trajectory Smoothing: While RRT* guarantees the shortest distance, the path still consists of straight lines and sharp corners. To translate this into a realistic quadcopter trajectory, the system applies three layers of smoothing:\nString Pulling: Raycasting between distant waypoints to delete redundant intermediate nodes. “Pigtail” Filter: A custom spatial filter that removes clustered waypoints (distance\u003c0,8m) to prevent the math from creating physical loops or overshoots. Quadratic B-Splines: Using scipy.interpolate.splprep (k=2) to bend the remaining sharp corners into a continuously smooth, aerodynamic flight curve. Local Reflexes: Dynamic Obstacle Avoidance A global path is useless if a dynamic obstacle moves in fromt of the drone. I built a real-time Dynamic Artificial Potential Field (APF) that runs asynchronously alongside the main flight loop.\nLiDAR Voxel Downsampling and DBSCAN Running clustering algorithms on 100000 raw LiDAR points per second will crash a Python control loop. To optimize this, the raw point cloud is first quantized into a 0.5m discrete grid. By keeping only one point per voxel block, the data footprint is reduced by 90% without losing spatial boundaries. This ultra-lightweight point cloud is then fed into DBSCAN to calculate the physical centroids of incoming threats.\nEgo-Motion Compensation and Time-to-Collision (TTC) Kinematics A classic problem in obstacle avoidance is ego-motion: if a drone flies forward at 5m/s, every static tree appears to be flying toward the sensor at 5m/s. To prevent the APF from panic-dodging static walls, the drone must mathematically cancel out its own movement.\nI implemented rigid body kinematic to isolate true moving threats.\nThe system reads the drone’s high speed odometry (linear and angular velocity). It rotates the world velocity into the LiDAR’s body frame using the drone’s current yaw. It calculates the false speed caused by the drone’s rotation using the cross product: $v_{rot}=w /times r$. It subtracts the drone’s ego-motion from the obstacle’s apparent velocity. If the resulting true velocity is near zero, the object is static and is ignored. If the object is truly moving toward the drone, the APF scales the repulsive force ($F_{repulsive}$) inversely by the Time-To-Collision (TTC).\n$$ F_{repulsive} = \\frac{K_{repulsive}}{d \\times TTC} $$\nYour browser does not support the video tag. This means the drone smoothly glides past static buildings, but will violently brake and snap away from a moving target (like another drone).\n# Grab drone kinematics and rotate World Velocity into the LiDAR's Body Frame v_body_x = v_world.x_val * math.cos(yaw) + v_world.y_val * math.sin(yaw) v_body_y = -v_world.x_val * math.sin(yaw) + v_world.y_val * math.cos(yaw) drone_linear_vel = np.array([v_body_x, v_body_y, v_world.z_val]) # Calculate false speed caused by drone rotation (v = w x r) drone_angular_vel = np.array([w_body.x_val, w_body.y_val, w_body.z_val]) rotational_offset = np.cross(drone_angular_vel, curr_centroid) # Cancel out ego-motion to find the TRUE object velocity safe_dt = max(dt, 0.05) # Guardrail against divide-by-zero explosions apparent_velocity = (curr_centroid - last_centroid) / safe_dt true_obj_vel = apparent_velocity + drone_linear_vel + rotational_offset dist = np.linalg.norm(curr_centroid) # Ignore distant objects (\u003e10m) and static objects (true speed \u003c 2.0m/s) if dist \u003c= 10.0 and np.linalg.norm(true_obj_vel) \u003e= 2.0: # Threat is truly moving Execute Dynamic TTC Math dir_to_drone = -curr_centroid / dist closing_speed = np.dot(apparent_velocity, dir_to_drone) if closing_speed \u003e 0.1: ttc = dist / closing_speed if ttc \u003c TTC_THRESHOLD: # Scale repulsive force inversely by Time-To-Collision force_dir = -curr_centroid / dist force_mag = REPULSIVE_CONSTANT / (dist * ttc) total_repulsive_force += force_dir * force_mag threat_detected = True Results, Ground Truth Benchmarking and Future Work Because this was built in AirSim, I was able to query the Unreal Engine physics simulator for the exact real-world (X, Y, Z) coordinates of the drone at the exact moment the vision system made its guess. By translating the Neural Map coordinates into AirSim Physics coordinates, I calculated the absolute 3D Euclidean error distance.\nPerformance Highlights:\nLocalization accuracay: The DISK + LightGlue consensus consistently localized the drone with sub-meter accuracy (often within 0.3m to 0.8m of the unreal engine ground truth), even when spawned in visually ambiguous areas. Path Planning Speed: RRT-Connect generated 3D voxel paths spanning 40+ meters through complex building layouts in under 1.5 seconds. Evasive Maneuvers: The Dynamic APF successfully overrode the global trajectory, violently braking the drone to avoid simulated physics boxed dropped directly onto the flight path, before smoothly returning to the B-spline curve. Real-World Edge Deployment (Future architecture) While this project runs monolithically alongside a simulator, the system was designed with physical “Edge AI” deployment in mind. To move this to a real drone, the UI and the “Brain” must be decoupled into a client-Server model.\nEdge Server (The Drone): The heavy computations (DINOv2, FAISS, RRT-Connect, APF) would be containerized via Docker and deployed onto an onboard companion computer. For high-end performance, an NVIDIA Jetson Orin Nano using TensorRT (FP16) provides robust CUDA acceleration. However, the architecture is flexible; for a budget-friendly build, edge-inference can be offloaded to cheaper alternatives like an Orange Pi 5 (RK3588 NPU) or a Raspberry Pi 5 paired with a Hailo-8 or Google Coral AI accelerator at a fraction of the cost. Client UI (Ground Control Station): The Open3D Tactical Map would run on an operator’s laptop or tablet (e.g., via ROS2 RViz or a web dashboard). The operator selects the Goal Sphere on the tablet, and a lightweight JSON payload of the (X, Y, Z) coordinates is sent to the drone via 4F LTE or RF telemetry. The drone executes the mission autonomously, relying strictly on its onboard sensros to survive. ",
+  "wordCount" : "3338",
   "inLanguage": "en",
   "datePublished": "0001-01-01T00:00:00Z",
   "dateModified": "0001-01-01T00:00:00Z",
@@ -246,15 +246,34 @@
 <h2 id="1-system-architecture-from-offline-baking-to-on-edge-reflexes">1. System Architecture: From Offline Baking to On-Edge Reflexes<a hidden class="anchor" aria-hidden="true" href="#1-system-architecture-from-offline-baking-to-on-edge-reflexes">#</a></h2>
 <p>Building a drone that can navigate autonomously requires splitting the brain into two parts: an offline mapping pipeline that does the heavy lifting, and a lightweight, real-time execution loop onboard the drone.</p>
 <p>here is a high-level look at how the data flows from raw video to physical motor commands:</p>
-<div class="mermaid-container">
-    <div class="mermaid-controls" style="position: absolute; top: 10px; right: 10px; z-index: 100; display: flex; gap: 5px;">
-        <button class="copy-mermaid" onclick="copyMermaid(this)" style="padding: 5px; opacity: 0.8; cursor: pointer;">Copy Code</button>
-        <button class="reset-mermaid" onclick="resetPanzoom(this)" style="padding: 5px; opacity: 0.8; cursor: pointer;">Reset View</button>
+<style>
+     
+    .mermaid-zoom-container .mermaid svg {
+        max-height: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        width: auto !important;
+    }
+</style>
+
+<div class="mermaid-zoom-container mermaid-container" 
+     onwheel="zoomMermaid(event, this)" 
+     onmousedown="startPan(event, this)" 
+     onmousemove="doPan(event, this)" 
+     onmouseup="stopPan(this)" 
+     onmouseleave="stopPan(this)"
+     style="position: relative; margin: 2rem 0; overflow: hidden; border: 1px solid rgba(128,128,128,0.2); border-radius: 8px; cursor: grab; height: 75vh; min-height: 500px; background: transparent; user-select: none;">
+    
+    <div class="mermaid-controls" style="position: absolute; top: 10px; left: 10px; z-index: 100; display: flex; gap: 5px;">
+        <button class="copy-mermaid" onclick="copyMermaid(this)" style="padding: 5px 10px; opacity: 0.8; cursor: pointer; border-radius: 4px; border: 1px solid var(--primary); background: var(--theme); color: var(--primary);">Copy Code</button>
+        <button class="reset-mermaid" onclick="resetPanzoom(this)" style="padding: 5px 10px; opacity: 0.8; cursor: pointer; border-radius: 4px; border: 1px solid var(--primary); background: var(--theme); color: var(--primary);">Reset View</button>
     </div>
     
-    <div class="mermaid">
-        
+    <div class="mermaid-canvas" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+        <div class="mermaid" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; transform-origin: center; transition: transform 0.1s ease-out;">
+            
 flowchart TB
+
   subgraph OFFLINE_PC["Phase 1: Mapping & Training (Offline Prep)"]
     direction TB
         RawData["Raw Data: Video + LiDAR + IMU"]
@@ -262,14 +281,12 @@ flowchart TB
         Traj("Drone Trajectory")
         GS_Train["Gaussian Splatting Training"]
         GS_Map["Gaussian Splat Map<br>(True-Color UPRIGHT)"]
-        
-        CleanPC["Statistical Outlier Removal<br>& Rotation Alignment"]
-        
-        %% Synthetic Layer Cake Pipeline
         GridGen["Generate 3D Camera Grid<br>(Altitude Layers)"]
         RenderView["Render Synthetic Images<br>(Render-and-Retrieve)"]
         DinoOffline["AnyLoc Feature Extraction<br>(DINOv2 + GeM Pooling)"]
-        VectorDB[(FAISS Vector Database<br>'Synthetic Memory Bank')]
+        
+        %% FIXED: Standard cylinder syntax
+        VectorDB[("FAISS Vector Database<br>'Synthetic Memory Bank'")]
         
         VoxelGrid["3D Voxel Grid<br>(occupancy_grid.npy)"]
   end
@@ -278,37 +295,36 @@ flowchart TB
     direction TB
         Mission["Start Mission: Point A -> B"]
         
+        %% FIXED: Physically nesting the subgraphs inside Phase 2
         subgraph SENSORS["Perception Layer"]
-            direction LR
+          direction LR
             Cam["Panoramic Camera<br>(6 Rotational Stops)"]
             Lidar["16-Channel LiDAR<br>(100k points/sec)"]
             GT["AirSim Ground Truth<br>(High-Speed Odometry)"]
         end
         
         subgraph LOCALIZATION["Visual Place Recognition (VPR) - 'Wake Up Brain'"]
-            direction TB
+          direction TB
             LiveDino["Live AnyLoc Extraction<br>(Cosine Similarity)"]
             SearchDB["FAISS Nearest Neighbors<br>(Top 3 Candidates)"]
             DiskLG["Fine Verification Tournament<br>(DISK + LightGlue > 100 inliers)"]
-            GCP_Align["Manual GCP Alignment<br>(AirSim <-> Open3D Shift+Click)"]
-            CoordMath["Rosetta Stone Math<br>(Trig Offset + Anchor Matrix)"]
+            CoordMath["Rosetta Stone Math<br>(Trig Offset + Anchor Matrix + Spawn Calibration)"]
             Consensus["Weighted Average Consensus<br>(Exact 3D Start Node)"]
         end
         
-
         subgraph GLOBAL_PLANNER["Global Tactical Planner"]
-            direction TB
+          direction TB
             TacticalUI["Open3D Tactical Map<br>(Human Operator Goal Selection)"]
-            PathEngine["Multi-Algorithm Engine<br>(RRT-Connect / Weighted A*)"]
-            Smoother["Path Smoothing<br>(String Pulling + Pigtail Filter + B-Spline)"]
+            RRT["3D RRT* Algorithm<br>(Cost-Optimized Rewiring)"]
+            Smoother["Path Smoothing<br>(String Pulling + Pigtail Filter B-Spline)"]
             MapTranslator["mapping.py<br>(1:1 Native Scale Translation)"]
         end
         
         subgraph LOCAL_PLANNER["Local Controller & Reflex Arc (Live Loop)"]
-            direction TB
+          direction TB
             VoxelFilter["0.5m Voxel Grid Downsampling"]
             DBSCAN["DBSCAN Clustering<br>(eps=0.8, min=2)"]
-            APF["Dynamic APF<br>(Static Repulsion + TTC Thresholds)"]
+            APF["Dynamic APF<br>(Ego-Motion Compensation + Noise Filter)"]
             StateMachine["State Machine<br>(Cruise / Dodge / Land)"]
             DodgeLogic["Path Resumption<br>(Skip 4 Waypoints Ahead)"]
         end
@@ -316,78 +332,66 @@ flowchart TB
         Motors["Motor Output Commands"]
   end
 
-    %% Phase 1 Flow
+    %% Edge Connections
     RawData --> SLAM
     SLAM -- Trajectory x,y,z --> Traj
     Traj -- Pose + Images --> GS_Train
     GS_Train -- Rendered Density --> GS_Map
-    GS_Map --> CleanPC
-    
-    %% Synthetic Augmentation Flow
-    CleanPC --> GridGen
+    GS_Map --> GridGen
     GridGen --> RenderView
     RenderView --> DinoOffline
     DinoOffline -- L2 Normalized Vectors --> VectorDB
+    GS_Map -- Gravity Align & Bake --> VoxelGrid
     
-    CleanPC -- Gravity Align & Bake --> VoxelGrid
-
-    %% Sensor Flow
-    Mission --> Cam
-    Mission --> Lidar
-    Mission --> GT
-
-    %% VPR / Localization Flow
+    Mission --> Cam & Lidar & GT
     Cam -- 6 Images --> LiveDino
     LiveDino -- Query --> SearchDB
     VectorDB -. Synthetic Memories .-> SearchDB
     SearchDB -- Coarse Pose --> DiskLG
     DiskLG -- Verified Image C2W --> CoordMath
-    GCP_Align -. Anchor Matrix .-> CoordMath
     CoordMath -- Aligned X,Y,Z --> Consensus
-
-    %% Global Planning Pipeline
     Consensus -- Visual Map Coordinates --> TacticalUI
-    TacticalUI -- Start + Goal Nodes --> PathEngine
-    VoxelGrid -. Static Collision Data .-> PathEngine
-    PathEngine -- Jagged Voxel Path --> Smoother
-    Smoother -- B-Spline Trajectory --> MapTranslator
+    TacticalUI -- Start + Goal Nodes --> RRT
+    VoxelGrid -. Static Collision Data .-> RRT
+    RRT -- Jagged Voxel Path --> Smoother
+    Smoother -- "B-Spline Trajectory" --> MapTranslator
     MapTranslator -- Translated Waypoints --> StateMachine
-
-    %% Local APF Pipeline
+    
     Lidar -- Raw Cloud --> VoxelFilter
     VoxelFilter -- Cleaned Points --> DBSCAN
     DBSCAN -- Threat Centroids --> APF
-    GT -- Velocity & Position --> APF
+    GT -- Linear/Angular Vel & Position --> APF
     APF -- Evasive Vector --> StateMachine
     StateMachine -- Dodge Executed --> DodgeLogic
     DodgeLogic -- Return to Path --> StateMachine
-
-    %% Controller Execution
     StateMachine -- moveByVelocityAsync<br>moveOnPathAsync --> Motors
 
     %% Styling
     VectorDB:::memory
     VoxelGrid:::memory
     Lidar:::safety
-    APF:::safety
-    DBSCAN:::safety
-    VoxelFilter:::safety
-    DodgeLogic:::safety
-    PathEngine:::logic
-    Smoother:::logic
-    StateMachine:::logic
     DiskLG:::logic
     CoordMath:::logic
     Consensus:::logic
+    RRT:::logic
+    Smoother:::logic
+    VoxelFilter:::safety
+    DBSCAN:::safety
+    APF:::safety
+    StateMachine:::logic
+    DodgeLogic:::safety
 
-    classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
-    classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    %% Make sure text stays black
+    classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000
+    classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000000
+    classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px,color:#000000
 
+        </div>
     </div>
     
     <pre class="mermaid-src" style="display:none;">
 flowchart TB
+
   subgraph OFFLINE_PC["Phase 1: Mapping & Training (Offline Prep)"]
     direction TB
         RawData["Raw Data: Video + LiDAR + IMU"]
@@ -395,14 +399,12 @@ flowchart TB
         Traj("Drone Trajectory")
         GS_Train["Gaussian Splatting Training"]
         GS_Map["Gaussian Splat Map<br>(True-Color UPRIGHT)"]
-        
-        CleanPC["Statistical Outlier Removal<br>& Rotation Alignment"]
-        
-        %% Synthetic Layer Cake Pipeline
         GridGen["Generate 3D Camera Grid<br>(Altitude Layers)"]
         RenderView["Render Synthetic Images<br>(Render-and-Retrieve)"]
         DinoOffline["AnyLoc Feature Extraction<br>(DINOv2 + GeM Pooling)"]
-        VectorDB[(FAISS Vector Database<br>'Synthetic Memory Bank')]
+        
+        %% FIXED: Standard cylinder syntax
+        VectorDB[("FAISS Vector Database<br>'Synthetic Memory Bank'")]
         
         VoxelGrid["3D Voxel Grid<br>(occupancy_grid.npy)"]
   end
@@ -411,37 +413,36 @@ flowchart TB
     direction TB
         Mission["Start Mission: Point A -> B"]
         
+        %% FIXED: Physically nesting the subgraphs inside Phase 2
         subgraph SENSORS["Perception Layer"]
-            direction LR
+          direction LR
             Cam["Panoramic Camera<br>(6 Rotational Stops)"]
             Lidar["16-Channel LiDAR<br>(100k points/sec)"]
             GT["AirSim Ground Truth<br>(High-Speed Odometry)"]
         end
         
         subgraph LOCALIZATION["Visual Place Recognition (VPR) - 'Wake Up Brain'"]
-            direction TB
+          direction TB
             LiveDino["Live AnyLoc Extraction<br>(Cosine Similarity)"]
             SearchDB["FAISS Nearest Neighbors<br>(Top 3 Candidates)"]
             DiskLG["Fine Verification Tournament<br>(DISK + LightGlue > 100 inliers)"]
-            GCP_Align["Manual GCP Alignment<br>(AirSim <-> Open3D Shift+Click)"]
-            CoordMath["Rosetta Stone Math<br>(Trig Offset + Anchor Matrix)"]
+            CoordMath["Rosetta Stone Math<br>(Trig Offset + Anchor Matrix + Spawn Calibration)"]
             Consensus["Weighted Average Consensus<br>(Exact 3D Start Node)"]
         end
         
-
         subgraph GLOBAL_PLANNER["Global Tactical Planner"]
-            direction TB
+          direction TB
             TacticalUI["Open3D Tactical Map<br>(Human Operator Goal Selection)"]
-            PathEngine["Multi-Algorithm Engine<br>(RRT-Connect / Weighted A*)"]
-            Smoother["Path Smoothing<br>(String Pulling + Pigtail Filter + B-Spline)"]
+            RRT["3D RRT* Algorithm<br>(Cost-Optimized Rewiring)"]
+            Smoother["Path Smoothing<br>(String Pulling + Pigtail Filter B-Spline)"]
             MapTranslator["mapping.py<br>(1:1 Native Scale Translation)"]
         end
         
         subgraph LOCAL_PLANNER["Local Controller & Reflex Arc (Live Loop)"]
-            direction TB
+          direction TB
             VoxelFilter["0.5m Voxel Grid Downsampling"]
             DBSCAN["DBSCAN Clustering<br>(eps=0.8, min=2)"]
-            APF["Dynamic APF<br>(Static Repulsion + TTC Thresholds)"]
+            APF["Dynamic APF<br>(Ego-Motion Compensation + Noise Filter)"]
             StateMachine["State Machine<br>(Cruise / Dodge / Land)"]
             DodgeLogic["Path Resumption<br>(Skip 4 Waypoints Ahead)"]
         end
@@ -449,82 +450,144 @@ flowchart TB
         Motors["Motor Output Commands"]
   end
 
-    %% Phase 1 Flow
+    %% Edge Connections
     RawData --> SLAM
     SLAM -- Trajectory x,y,z --> Traj
     Traj -- Pose + Images --> GS_Train
     GS_Train -- Rendered Density --> GS_Map
-    GS_Map --> CleanPC
-    
-    %% Synthetic Augmentation Flow
-    CleanPC --> GridGen
+    GS_Map --> GridGen
     GridGen --> RenderView
     RenderView --> DinoOffline
     DinoOffline -- L2 Normalized Vectors --> VectorDB
+    GS_Map -- Gravity Align & Bake --> VoxelGrid
     
-    CleanPC -- Gravity Align & Bake --> VoxelGrid
-
-    %% Sensor Flow
-    Mission --> Cam
-    Mission --> Lidar
-    Mission --> GT
-
-    %% VPR / Localization Flow
+    Mission --> Cam & Lidar & GT
     Cam -- 6 Images --> LiveDino
     LiveDino -- Query --> SearchDB
     VectorDB -. Synthetic Memories .-> SearchDB
     SearchDB -- Coarse Pose --> DiskLG
     DiskLG -- Verified Image C2W --> CoordMath
-    GCP_Align -. Anchor Matrix .-> CoordMath
     CoordMath -- Aligned X,Y,Z --> Consensus
-
-    %% Global Planning Pipeline
     Consensus -- Visual Map Coordinates --> TacticalUI
-    TacticalUI -- Start + Goal Nodes --> PathEngine
-    VoxelGrid -. Static Collision Data .-> PathEngine
-    PathEngine -- Jagged Voxel Path --> Smoother
-    Smoother -- B-Spline Trajectory --> MapTranslator
+    TacticalUI -- Start + Goal Nodes --> RRT
+    VoxelGrid -. Static Collision Data .-> RRT
+    RRT -- Jagged Voxel Path --> Smoother
+    Smoother -- "B-Spline Trajectory" --> MapTranslator
     MapTranslator -- Translated Waypoints --> StateMachine
-
-    %% Local APF Pipeline
+    
     Lidar -- Raw Cloud --> VoxelFilter
     VoxelFilter -- Cleaned Points --> DBSCAN
     DBSCAN -- Threat Centroids --> APF
-    GT -- Velocity & Position --> APF
+    GT -- Linear/Angular Vel & Position --> APF
     APF -- Evasive Vector --> StateMachine
     StateMachine -- Dodge Executed --> DodgeLogic
     DodgeLogic -- Return to Path --> StateMachine
-
-    %% Controller Execution
     StateMachine -- moveByVelocityAsync<br>moveOnPathAsync --> Motors
 
     %% Styling
     VectorDB:::memory
     VoxelGrid:::memory
     Lidar:::safety
-    APF:::safety
-    DBSCAN:::safety
-    VoxelFilter:::safety
-    DodgeLogic:::safety
-    PathEngine:::logic
-    Smoother:::logic
-    StateMachine:::logic
     DiskLG:::logic
     CoordMath:::logic
     Consensus:::logic
+    RRT:::logic
+    Smoother:::logic
+    VoxelFilter:::safety
+    DBSCAN:::safety
+    APF:::safety
+    StateMachine:::logic
+    DodgeLogic:::safety
 
-    classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
-    classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    %% Make sure text stays black
+    classDef memory fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000
+    classDef logic fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000000
+    classDef safety fill:#ffccbc,stroke:#bf360c,stroke-width:2px,color:#000000
 </pre>
 </div>
+
+<script>
+    window.mermaidPanState = window.mermaidPanState || new Map();
+
+    function getContainerState(container) {
+        if (!window.mermaidPanState.has(container)) {
+            window.mermaidPanState.set(container, { scale: 1, tx: 0, ty: 0, isDragging: false, startX: 0, startY: 0 });
+        }
+        return window.mermaidPanState.get(container);
+    }
+
+    function updateTransform(container, state, smooth = false) {
+        const canvas = container.querySelector('.mermaid');
+        canvas.style.transition = smooth ? "transform 0.3s ease-out" : "none";
+        canvas.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`;
+    }
+
+    function zoomMermaid(event, container) {
+        event.preventDefault(); 
+        const state = getContainerState(container);
+        const zoomIntensity = 0.1;
+        
+        if (event.deltaY < 0) { state.scale += zoomIntensity; } 
+        else { state.scale -= zoomIntensity; } 
+        
+        state.scale = Math.min(Math.max(0.5, state.scale), 4);
+        updateTransform(container, state, false);
+    }
+
+    function startPan(event, container) {
+        const state = getContainerState(container);
+        state.isDragging = true;
+        state.startX = event.clientX - state.tx;
+        state.startY = event.clientY - state.ty;
+        container.style.cursor = 'grabbing';
+    }
+
+    function doPan(event, container) {
+        const state = getContainerState(container);
+        if (!state.isDragging) return;
+        event.preventDefault();
+        state.tx = event.clientX - state.startX;
+        state.ty = event.clientY - state.startY;
+        updateTransform(container, state, false);
+    }
+
+    function stopPan(container) {
+        const state = getContainerState(container);
+        state.isDragging = false;
+        container.style.cursor = 'grab';
+    }
+
+    function resetPanzoom(btn) {
+        const container = btn.closest('.mermaid-zoom-container');
+        const state = getContainerState(container);
+        
+        state.scale = 1;
+        state.tx = 0;
+        state.ty = 0;
+        updateTransform(container, state, true);
+    }
+
+    function copyMermaid(btn) {
+        const container = btn.closest('.mermaid-zoom-container');
+        const srcText = container.querySelector('.mermaid-src').innerText;
+        navigator.clipboard.writeText(srcText).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+</script>
 <p><em>(Note: The system is designed so that heavy computations like vector database generation and collision grid inflation happen entirely offline. The live drone only preforms fast matrix multiplications, inner product searchers, and lightweight clustering)</em></p>
 <h2 id="phase-1-the-memory-bank-and-voxel-grid">Phase 1: The Memory Bank and Voxel grid<a hidden class="anchor" aria-hidden="true" href="#phase-1-the-memory-bank-and-voxel-grid">#</a></h2>
 <p>Before drone can fly autonomously, it needs two things: a physical understanding of the world to avoid crashing and a visual memory to know where it is without GPS.</p>
-<p><strong>From Gaussian Splats to Collision Grids</strong>
-Why 3DGS? Traditional photogrammetry generates point clouds and textured meshes. While great for collision avoidance, meshes often produce &ldquo;tearing&rdquo; or artifacts when rendering novel views. 3DGS represents the scene as continuous, translucent mathematical ellipsoids. This allows for <strong>photorealistic novel view synthesis</strong> which is absolutely critical for generating accurate synthetic training data for the drone&rsquo;s vision system.</p>
+<p><strong>From Gaussian Splats to Collision Grids</strong></p>
+<video width="100%" autoplay loop muted playsinline style="border-radius: 8px;">
+  <source src="/auto/voxel-grid-final.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+<p>Why 3DGS? Traditional photogrammetry generates point clouds and textured meshes. While great for collision avoidance, meshes often produce &ldquo;tearing&rdquo; or artifacts when rendering novel views. 3DGS represents the scene as continuous, translucent mathematical ellipsoids. This allows for <strong>photorealistic novel view synthesis</strong> which is absolutely critical for generating accurate synthetic training data for the drone&rsquo;s vision system.</p>
 <p>First, I extracted the raw point cloud from 3DGS model. To extract the true base colors of the scene, I decoded the zeroth degree sphereical harmonics $(S H_0)$:
-$$C_RGB = SH_0 \times 0.282094 + 0.5$$</p>
+$$C_{RGB} = SH_0 \times 0.282094 + 0.5$$</p>
 <p>Once extracted and rotated into a standard gravity-aligned coordinate system, the continuous points are quantized into a discrete 3D occupancy matrix (a voxel grid) using a 0.2m resolution. To map a physical continuous coordinate (P) to a discrete grid index, I applied:</p>
 <p>$$Index = \left( \frac{P - P_{min}}{V_size}\right)$$</p>
 <p><strong>The Safety buffer:</strong> Drones have physical wingspans. To prevent the center of the drone from pahtfinding too close to a wall, I applied a 3D binary dialation using <code>scipy.ndimage</code>. This &ldquo;inflates&rdquo; the walls of the voxel grid by 0.5 meters, creating an invisible safety buffer.</p>
@@ -845,21 +908,7 @@ While this project runs monolithically alongside a simulator, the system was des
 </script>
 
 <style>
-    .mermaid {
-        background: transparent !important;
-        display: flex;
-        justify-content: center;
-        margin: 20px 0;
-    }
-
-    .mermaid svg {
      
-    color: var(--primary) !important;
-    }
-
-    .mermaid text {
-        fill: var(--primary) !important;  
-    }
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
