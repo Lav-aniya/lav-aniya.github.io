@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline | Lav-Aniya&#39;s Site</title>
+<meta name="keywords" content="Deep Learning, Python, CADD, EGNN, PyTorch, Geometric Deep Learning">
+<meta name="description" content="An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.">
+<meta name="author" content="Lav-niya">
+<link rel="canonical" href="https://lav-aniya.github.io/projects/molecular_ensemble/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.a844bf17455ca5bc54dca4c275466c42761e3d12db7bc3ba48ef427d8122b9fe.css" integrity="sha256-qES/F0VcpbxU3KTCdUZsQnYePRLbe8O6SO9CfYEiuf4=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://lav-aniya.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://lav-aniya.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://lav-aniya.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://lav-aniya.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://lav-aniya.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://lav-aniya.github.io/projects/molecular_ensemble/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: "\\begin{equation}", right: "\\end{equation}", display: true},
+                {left: "\\begin{equation*}", right: "\\end{equation*}", display: true},
+                {left: "\\begin{align}", right: "\\end{align}", display: true},
+                {left: "\\begin{align*}", right: "\\end{align*}", display: true},
+                {left: "\\begin{alignat}", right: "\\end{alignat}", display: true},
+                {left: "\\begin{gather}", right: "\\end{gather}", display: true},
+                {left: "\\begin{CD}", right: "\\end{CD}", display: true},
+            ],
+            throwOnError : false
+        });
+    });
+</script>
+
+<meta property="og:url" content="https://lav-aniya.github.io/projects/molecular_ensemble/">
+  <meta property="og:site_name" content="Lav-Aniya&#39;s Site">
+  <meta property="og:title" content="Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline">
+  <meta property="og:description" content="An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="projects">
+    <meta property="article:published_time" content="2026-11-23T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-11-23T00:00:00+00:00">
+    <meta property="article:tag" content="Deep Learning">
+    <meta property="article:tag" content="Python">
+    <meta property="article:tag" content="CADD">
+    <meta property="article:tag" content="EGNN">
+    <meta property="article:tag" content="PyTorch">
+    <meta property="article:tag" content="Geometric Deep Learning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline">
+<meta name="twitter:description" content="An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Projects",
+      "item": "https://lav-aniya.github.io/projects/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Autonomous Drug Discovery: A Multimodal De Novo Generation \u0026 SE(3)-Equivariant Scoring Pipeline",
+      "item": "https://lav-aniya.github.io/projects/molecular_ensemble/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Autonomous Drug Discovery: A Multimodal De Novo Generation \u0026 SE(3)-Equivariant Scoring Pipeline",
+  "name": "Autonomous Drug Discovery: A Multimodal De Novo Generation \u0026 SE(3)-Equivariant Scoring Pipeline",
+  "description": "An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.",
+  "keywords": [
+    "Deep Learning", "Python", "CADD", "EGNN", "PyTorch", "Geometric Deep Learning"
+  ],
+  "articleBody": "Multimodal Pipeline for Target-Specific Drug Discovery: From SELFIES to 3D Equivariance Introduction: The Funnel Philosophy Drug discovery is, at its core, a search space problem of incomprehensible scale. The theoritical chemical universe of synthetically viable, drug-like molecules is estimated to be around $10^{60}$. Even if we restrict ourselves to known, synthesizable libraries like Enamine REAL, we are still looking at billions of compounds.\nTraditional High-Throughput Screening (HTS) in a wet lab tops out at a few million compounds and costs millions of dollars. Standard computational Virtual Screening (VS) using classical physics engines like AutoDock Vina can process more, but it is still fundamentally a “needle in a haystack” approach; you are testing random molecules hoping one happens to fit your target receptor.\nInstead of searching a static library, the modern AI approach is De Novo Generation: teaching a model the grammar of chemistry and asking it to generate novel molecules specifically tailored for a target (in this case, the Mpro protease of SARS-CoV-2 from the COVID Moonshot dataset).\nHowever, you cannot simply plug a generative language model directly into a 3D physics engine. Physics-informed, Equivariant Graph Neural Networks (EGNNs) and diffusion-based docking models (Diffdock-Pocket) are computationally heavy. Running a 3D point-cloud evaluation on millions of raw, generated sequences is hardware-impossible, even on A100 clusters.\nThe Pipeline Architecture Overview The system is orchestrated to pass molecules through the following stages, ensuring that only the most viable, non-toxic, and highly specific candidates ever reach the final 3D physics engine:\nPhase 1: De Novo Generation (The Source). We abandon SMILES strings which frequently result in mathematically invalid outputs during autoregressive sampling, in favor of SELFIES. A Causal Transformer (SELFIES-GPT) is pre-trained on the MOSES dataset to learn general valency, then fine-tuned on the COVID Moonshot dataset to generate novel Mpro-targeted geometries. Gate 1: The Multimodal ADMET Oracle (1D + 2D). Before calculating spatial binding affinity, a molecule must be biologically viable. This gates uses a MultimodalFusionScorer that cross-attends a 1D sequence (via a SMILES Transformer) with 2D topological graph features (via a Directed-MPNN). It acts as a high-speed filter to score Toxicity, Solubility, Mutagenicity, and hERG liability. Molecules that fail here are instantly discarded. Gate 2: The Dimensionality Upgrade (2D -\u003e 3D). The surviving “elite” molecules are upgraded from flat topological graphs into 3D conformers in a vacuum, preparing them for spatial interaction. Gate 3a: Physics-Informed Posing (DiffDock Pocket). To evaluate binding, the ligand must be accurately positioned inside the protein. We utilize DiffDock specifically targeted at the Mpro active site to generate physically viable, clash-free docking poses. Gate 3b: SE(3)-Equivariant Scoring (EGNN). The final, most computationally expensive step. An Equivariant Graph Neural Network (Gate3_EGNNScorrer) processes the 3D point cloud of the protein-ligand complex. Because it is strictly SE(3) equivariant, it understands the 3D spatial geometry (push/pull atomic forces) regardless of rotational orientation, predicting a highly accurate binding affinity ($pK_{d}$). Throughout this project, data integrity was a strict architectural constraint. There is no “faking” data downstream; the final UI and evaluation metrics strictly utilize the precomputed elites that legitimately survived Gate 1, preserving their original, unmodified generated geometries through the 3D scoring phase.\nIn the following sections, we will open up the source code for each of these models, exploring the mathematical necessity of the architectures, the loss functions, and the hardware-specific optimizations required to train them.\n2. Phase 1: De Novo Generation with SELFIES-GPT To discover a novel Mpro inhibitor, the pipeline must hallucinate entirely new chemistry. We treat molecular geenration as an autoregressive language modeling task. However, applying Natural Language Processsing to chemistry requires solving a fundamental representational bottleneck.\n2.1 The Representation Bottleneck: SELFIES vs. SMILES The industry standard, SMILES, is highly fragile. It relies on strict topological syntax for branching () and ring closures 1...1. In an autoregressive generation scenario, if the model predicts C1CCCCC but fails to predict the closing 1 due to stochastic sampling, the entire string collapses into a mathematically invalid graph.\nTo guarantee 100% syntactical validity, the pipeline’s phase1_tokenizer.py translates all SMILES into SELFIES (SELF-referencing Embedded Strings). SELFIES operates on a Chomsky Type-0 grammar designed for machine learning. Every permutation of a SELFIES sequence maps to a physically valid molecular graph, forcing the loss landscape to reflect actual chemical properties rather than syntactical errors.\n2.2 Model Architecture: The Causal Transformer The core engine is SELFIESGeneratorGPT, a decoder-only Transformer built natively in PyTorch. The model projects tokenized discrete inputs into a continuous embedding space $d_{model} = 256$, across 6 layers and 8 attention heads.\nBecause Transformers are permutation-invariant, spatial order is injected using absolute sinusodial Positional Encoding before the sequence enters the attention blocks:\n$$PE_{(pos,2i)} = sin \\left( \\frac{pos}{(1000^{2i/d_{model}})} \\right)$$ $$PE_{(pos,2i+1)} = cos \\left( \\frac{pos}{(1000^{2i/d_{model}})} \\right)$$\nThe Causal Masking Logic To prevent the model from “cheating” by looking at future tokens, we apply a strict causal mask M. This is an upper-triangular matrix where the upper elements are set to $- \\infty$ (or in PyTorch’s boolean masking, True means “ignore”).\nWhen calculating scaled Dot-Product Attention, this mask is added to the unnormalized attention logits before the softmax operation:\n$$Attention(Q, K, V) = softmax \\left( \\frac{QK^{T}}{\\sqrt{d_{k}}} + M \\right) V$$ In selfies_gpt.py, instead of relying on external decoder modules, I implemented this by passing a strictly generated upper-triangular matrix directly into PyTorch’s TransformerEncoderLyar:\ndef forward(self, src): device = src.device seq_len = src.size(1) pad_mask = (src == self.pad_idx) # Generate the strict Causal Mask matrix causal_mask = torch.triu(torch.ones(seq_len, seq_len, dtype=torch.bool, device=device), diagonal=1) src_emb = self.embedding(src) * math.sqrt(self.d_model) src_emb = self.pos_encoder(src_emb.transpose(0, 1)).transpose(0, 1) output = self.transformer_stack( src_emb, mask=causal_mask, src_key_padding_mask=pad_mask, is_causal=True ) return self.fc_out(output) This forces the prediction for token $x_{t}$ to be strictly conditioned on the joint probability distribution of preceding tokens: $P(x_{t} | x_{1}, x_{2}, x_{3},…, x_{t-1})$.\n2.3 Training Strategy and Hardware Optimization We utilize a two-stage transfer learning pipeline:\nGeneral Domain (MOSES): The model is pre-trained from scratch on ~2M molecules to learn baseline chemical valency. Target Domain (COVID Moonshot): Pre-trained weights are loaded via strict=True, and the model is fine-tuned on the COVID Moonshot dataset to shift the distribution toward Mpro-active chemotypes. The Fine-Tuning Loop (finetune_selfies_gpt.py)\nThe objective function is Cross-Entropy Loss applied across the flattened sequence, explicitly ignoring the padding index to prevent the model from optimizing for empty space:\n$$\\mathcal{L} = -\\sum_{c=1}^{V} y_{o,c} \\log(p_{o,c})$$ (where $V$ is the vocab size, and $p_{o,c}$ is the predicted probability of the correct token).\nTo push maximum throughput on A100 GPU, the fine-tuning script abandons standard FP32 math.\nTF32 and BFloat16: TensorFloat-32 is enabled globally, and the forward pass is scoped inside an autocast('cuda', dtype=torch.bfloat16) context. bfloat16 retains the 8-bit exponent of FP32 (preventing underflow) while dropping the mantissa to 7 bits, allowing A100 Tensor Cores to process the math natively. Kernel Fusion: In PyTorch 2.0+, torch.compile is invoked. This traces the computation graph and fuses pointwise operations (like the GELU activations and Dropouts inside the Transformer layers) into optimized Triton kernels, vastly reducing memory bandwidth overhead. # Enable Tensor Cores for matrix math torch.backends.cuda.matmul.allow_tf32 = True # Kernel Fusion for A100 if int(torch.__version__.split('.')[0]) \u003e= 2: model = torch.compile(model) optimizer = optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4) criterion = nn.CrossEntropyLoss(ignore_index=pad_idx) # Inside the training loop: with autocast('cuda', dtype=torch.bfloat16): logits = model(x) logits_flat = logits.view(-1, tokenizer.vocab_size) y_flat = y.view(-1) loss = criterion(logits_flat, y_flat) Because torch.compile modifies the internal module reference, saving the weigths directly would corrupt the checkpoint for later inference. The script cleanly unwraps the compiled model via unwrapped_model = model._orig_mod before saving the state dictionary.\n2.4 Inference and Generation During inference, we seed the model with a start token. The model outputs a probability distribution over the vocabulary space of $V$ tokens for position $t$. We sample the next token (often scaling the logits by a temperature parameter $T$ to control diversity: $q_{i} = \\frac{exp(z_{i}/T)}{\\sum_{j} exp(z_{i} / T)}$, append it to the sequence, and feed the new sequence back into the model until an End-of-Sequence token is generated.\nThis engine successfully generates novel, Mpro-biased SELFIES strings. However, a generated sequence does not guarantee biological safety. For that, these molecules must pass through Gate 1.\n2.5 Training Dynamics and Transfer Learning Results To validate that the Causal Transformer was actually leraning the Chomsky Type-0 grammar of SELFIES rather than just memorizing sequences, I tracked the autoregressive loss across both general and target-specific training phases.\nPhase 1A: Base Chemical Grammar (MOSES Dataset) During the initial pre-training on the MOSES dataset, the model was tasked with learning general valency, ring structure, and drug-likeness.\n[PHASE1_traning_curves.jpg]\nAs shown in the epoch convergence plot, the average cross-entropy loss dropped sharply from initial initialization and smoothly asymptoted to a final loss of 0.563 over 20 epochs. The stability of the batch loss (left) demonstrates that the model successfully mapped the foundational rules of organic chemistry into its 256-dimensional embedding space without vanishing gradients.\nPhase 1B: Target Specificity (COVID Moonshot) Once the model understood basic chemistry, I initiated transfer learning, freezing the base representation and fine-tuning specifically on the COVID Moonshot dataset to bias the generator toward Mpro-active chemotypes.\n[phase1_finetuning_curves.jpg]\nFine-tuning language models on highly specific, smaller datasets often leads to catastrophic forgetting or chaotic loss spikes. However, thanks to the bfloat16 mixed-precision environment and A100 kernel fusion, the fine-tuning convergence was remarkably stable. Over 10 epochs, the model smoothly minimized down to a final loss of 0.670. This proves the model successfully learned the targeted spatial motifs necessary for the Mpro pocket while retaining its foundational chemical grammar.\n3. Gate 1: The Multimodal ADMET Oracle (1D + 2D) A generative model optimizing strictly for protein binding will often hallucinate highly reactive, toxic, or insoluble molecules. In drug discovery, ADMET (Absorption, Distribution, Metabolism, excretion, and Toxicity) is just as critical as binding affinity.\nhowever, chemical properties are dictated by different dimensional representations. Some properties (like logP or solubility) are easily captured by 1D sequences motifs, while others (like steric hindrance or specific toxicity alerts) require an understanding of 2D graph topology.\nTo create a high-speed, highly accurate ADMET filter, Gate 1 employs a Multimodal Fusion Architecture. It independently processes the molecule as a 1D sequence and a 2D graph, dynamically fusing the representations before passing them to a multi-task prediction head.\n3.1 The 1D Sequence Encoder: SMILES Transformer While Phase 1 uses SELFIES for autoregressive generation, Gate 1 utilizes SMILES. Because Gate 1 is a predictive filter (not a generator), the fragility of SMILES is no longer an issue, and SMILES strings often provide a more compact representation of functional groups for Bidirectional Transformers.\nThe 1D encoder (transformer.py) is a 4-layer, 8-head BERT-style Transformer Encoder ($d_{model} = 128$).\nPre-training via masked language Modeling (MLM)\nBefore predicting ADMET properties, the Transformer must understand chemistry. I built a custom DataCollatorForMLM that dynamically pads sequences and applies the classic 80/10/10 masking rule to 15% of the tokens:\n80% of the time, the token is replaced with [MASK]. 10% of the time, it is replaced with a random token (forcing the model to rely on contextual correction). 10% of the time, it is left unchanged (teaching the model that the input might already be correct). Engineering Detail: The A100 Fast-Path Crash\nDuring heavily batched mixed-precision training on A100 GPUs, PyTorch’s native Nestedtensor “Fast Path” for Transformers frequently triggered memory access violations when dealing with dynamically padded SMILES sequences. To ensure stability during the 20-epoch pre-training loop, I explicitly disabled it inside the encoder block:\nself.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers) # FIXING THE A100 CRASH # Disables the \"Fast Path\" optimization to prevent memory violations on dynamic padding self.transformer_encoder.enable_nested_tensor = False During the forward pass, we throw away the rest of the sequence and extract only the [CLS] token at index 0, yielding a continuous vector representation of the 1D sequence.\n3.2 The 2D Topological Encoder: Directed-MPNN Standard Graph Convolutional Networks (GCNs) process molecules by passing messages between atoms (nodes). This leads to a severe problem known as “tottering.” A message will travel from Atom A to Atom B at step $t$, and then bounce right back from Atom B to Atom A at step $t + 1$. This creates an artificial echo chamber of redundant noise, drowning out the actual topological structure of the rings and chains.\nTo solve this, the pipeline uses a Directed Message Passing Neural Network (D-MPNN)(D_MPNN.py). Instead of updating node states, it updates directed edge states (bonds).\nlet $h_{vw}^{(t)}$ be the hidden state of the directed bond from atom $v$ to atom $w$. To update this bond, we sum the messages from all incoming bonds to $v$, subtracting the exact reverse bond $w \\rightarrow v$ :\n$$m_{vw}^{(t+1)} = \\sum_{k \\in N(v) \\setminus {w}} h_{kv}^{(t)}$$ In the PyTorch Geometric implementation, this requires maintaining an index to quickly grab the reverse of every edge:\n# Create an index to quickly grab the reverse of every edge num_edges = edge_index.size(1) reverse_indices = torch.arange(num_edges, device=x.device) # Swap evens and odds: [1, 0, 3, 2, 5, 4 ...] reverse_indices[0::2] = torch.arange(1, num_edges, 2, device=x.device) reverse_indices[1::2] = torch.arange(0, num_edges, 2, device=x.device) # Directed Message Passing messages_to_edges = node_messages[sender_nodes] reverse_edge_hidden = edge_hidden[reverse_indices] # The Chemprop D-MPNN core logic: subtract the reverse edge directed_messages = messages_to_edges - reverse_edge_hidden edge_update = F.relu(self.edge_norms[i](self.W_h[i](directed_messages))) # Add the update to the INITIAL state h^0 to prevent oversmoothing edge_hidden = F.relu(initial_edge_hidden + edge_update) After updating the edges across $N$ layers, the edge states are aggregated back to the receiver atoms via a highly efficient scatter reduction (which acts like a SQL GROUP BY operation for tensors).\nFinally, a Global Attention Pool (GATE network) calculates a dynamic importance score (0 to 1) for each atom, outputting a single 128-dimensional vector representing the 2D topology of the molecule.\n3.3 The Cross-Attention Fusion Layer We now have two representations: a 1D sequence vector and a 2D graph vector. Simple concatenation ($[v_{1D}, v_{2D}]$) is suboptimal because it doesn’t allow the two modalities to interact contextually.\nInstead, fusion_layer.py implements a Cross-Attention Mechanism. The GNN topological vector acts as the Query ($Q$), while the full, unspooled Transformer sequence acts as the Keys ($K$) and Values ($V$) :\n$$Fused = softmax \\left( \\frac{Q_{gnn}K^{T}{transformer}}{\\sqrt{d{k}}} \\right) V_{transformer}$$ This allows the topological structure of the molecule to “look” across the 1D sequence and attend specifically to the structural motifs that match its graph, creating a deeply fused representation before passing it to a shared dense backbone.\n3.4 Multi-Task Learning via Dynamic Uncertainty Weighting The fused vector is passed to four distinct prediction heads: Hepatoxicity (Classification), Mutagenicity (Classification), Solubility (Regression), and hERG Liability (Classification).\nTraining a Multi-Task Learning (MTL) network is notoriously difficult because gradients from different tasks often fight each other. Furthermore, some datasets (like hERG classifications) are highly noisy and prone to false positives in the lab. If we apply equal loss weights, the network will destroy its shared backbone trying to fit the hERG noise.\nTo prevent this, I implemented Homoscedastic Uncertainty Weighting (custom_lossfunction.py). Rather than manually tuning hyperparameter weights for each task, the model initializes four learnable parameters log ($\\sigma_{i}^{2}$).\nThe dynamic loss function is defined as:\n$$\\mathcal{L}{total} = \\sum{i=1}^{4} \\left( \\frac{1}{2\\sigma_i^2}\\mathcal{L}i + \\frac{\\log(\\sigma_i^2)}{2} \\right)$$ If the hERG dataset is producing chaotic, contradictory gradients, the model will naturally increase $\\sigma{hERG}^{2}$ to minimize the overall loss. This effectively down-weights the hERG gradient contribution dynamically, acting as a learned, self-adjusting temperature scale.\nIn code, this is implemented using $log(variance)$ for numerical stability to avoid division by zero:\nclass DynamicMultiTaskLoss(nn.Module): def __init__(self, num_tasks=4, base_weights=None): super(DynamicMultiTaskLoss, self).__init__() self.num_tasks = num_tasks # To permanently weaken noisy datasets base_weights = base_weights or [1.0] * num_tasks self.register_buffer('base_weights', torch.tensor(base_weights, dtype=torch.float32)) # Learnable variance parameters initialized to 0 (equal weight of 1.0) self.log_vars = nn.Parameter(torch.zeros(num_tasks)) self.bce_loss = nn.BCEWithLogitsLoss() self.mse_loss = nn.MSELoss() def forward(self, masked_preds, masked_targets): # Uncertainty weighting: Loss * exp(-log_var) + (log_var / 2) precision = torch.exp(-self.log_vars[i]) dynamic_loss = (loss * precision) + (self.log_vars[i] / 2.0) final_task_loss = dynamic_loss * self.base_weights[i] total_loss += final_task_loss By adding a base_weights multiplier, I maintain the ability to manually handicap inherently unreliable assays permanently, while letting the model fine-tune the relative importance of the remaining tasks epoch-by-epoch.\nMolecules that survive this rigorous ADMET filtering are deemed “elite.” They are chemically valid, target-biased, non-toxic, and highly soluble. However, they are still just flat sequences and graphs. To determine if they actually bind to the Mpro pocket, we must pull them into the third dimension.\n3.5 Representation Learning: Base Convergence Before the Multimodal Fusion layer can accurately predict complex biological ADMET properties (like hERG liability or Hepatotoxicity), the underlying graph encoders must learn robust baseline representations of molecular topology.\nTo achieve this, the base graph network was pre-trained on the GuacaMol dataset.\n[loss_curve.png]\nThe resulting training curve is textbook example of healthy generalization. Over 20 epochs, the cross-entropy loss drops from nearly 0.400 down to roughly 0.205. More importantly, the Validation Loss (orange) tracks the Training Loss (blue) almost perfectly throughout the entire run.\nIn geometric deep learning, graph networks are notoriously prone to overfitting due to the sparsity of topological features. This tight coupling between train and validation loss proves that the message-passing architecture is learning universally applicable chemical representations, rather than just memorizing the GuacaMol training graphs. This creates a highly stable, generalized topological vector to feed into the Cross-Attention Fusion layer for the final multi-task ADMET predictions.\n4. Gate 2: Bridging the Dimensional Gap (2D to 3D) Up to this point in the pipeline, our generated molecules exist purely in mathematical abstraction, as sequences of tokens or 2D topological graphs. However, biology operates in three dimensions. The binding affinity of an Mpro inhibitor is strictly governed by spatial interactions: hydrogen bonds, Van der Waals forces, and steric clashes inside the protein pocket.\nBefore we can evaluate how a ligand interacts with a protein, we must first collapse the 2D graph into a physically viable 3D object.\nThe ETKDG Conformer Generation\nGenerating a 3D structure from a 2D graph is a non-trivial inverse problem. A single molecule can adopt millions of different 3D shapes (conformers) by rotating around its single bonds.\nFor this initial transformation, Gate 2 relies on RDKits’s ETKDG (Experimental-Torsion Knowledge Distance Geometry) algorithm. ETKDG improves upon standard distance geometry by incorporating experimental knowledge from the Cambridge Structural Database (CSD).\nInstead of randomly embedding the atoms and minimizing them with a generic force field (like MMFF94), ETKDG applies basic physical constraints:\nDistance Bounds: Ensuring bond lengths and angles match established chemical atoms. Torsional Preferences: Biasing the dihedral angles of the generated conformer to match experimentally observed low-energy states. # Generate initial 3D Conformer in a vacuum mol = Chem.MolFromSmiles(smiles) mol = Chem.AddHs(mol) # Explicit hydrogens are critical for 3D physics AllChem.EmbedMolecule(mol, AllChem.ETKDG()) The output of Gate 2 is a chemically accurate 3D molecule. However, this conformer is generated in a vacuum. The lowest-energy shape a molecule takes in empty space is rarely the shape it adopts when binding to a protein (the bioactive pose). To find that active pose, we must move to Gate 3a.\n5. Gate 3a: Physics-Informed Posing with Diffdock-Pocket By the end of Gate 2, we have used ETKDG to generate a valid, low-energy 3D conformer of our generated molecule. However, this conformer was generated in a vacuum. When a ligand enters a protein pocket, it twists, folds, and adapts its shape to maximize favorable interactions (hydrogen bonds, Van der Waals forces) and minimizes steric clashes..\nTo evaluate if our generated molecule actually binds to the Mpro active site, we must find this bioactive pose.\n5.1 The Failure of Classical Search Algorithms For decades, the industry standard for this step has been classical docking softwares like AutoDock Vina, Glide, or SMINA. These tools treat docking as a stochastic search problem. They place the ligand in the pocket, randomly mutate its translation, rotation, and dihedral (torsional) angles, and calculate and empirical energy score.\nThis breaks down at scale for two reasons:\nThe Combinatorial Explosion: A ligand with $m$ rotatable bonds has an exponential number of possible conformations. Searching this highly non-convex energy landscape using Genetic Algorithms or Monte Carlo sampling almost guarantees getting trapped in a local minimum. Empirical Scoring: Classical scoring functions heavily approximate quantum mechanics. They often fail to correctly penalize subtle steric clashes, leading to physically impossible overlapping atoms. To bypass this, the pipeline treats docking not as a search problem, but as a Generative Modeling Problem using Diffusion.\n5.2 Generative Diffusion over $SE(3) \\times SO(2)^{m}$ When we think of diffusion models (like Midjourney or Stable Diffusion), we think of adding Gaussian noise to 2D pixel arrays. You cannot do this with molecules. If you add independent Gaussian noise to the X, Y, Z coordinates of every atom, you will tear the bonds apart and destroy the molecule’s chemical identity.\nInstead, DiffDock operates on the natural physical degrees of freedom of the ligand. It diffuses over a specific mathematical manifold, a product space defined as:\n$$\\mathcal{M} = SE(3) \\times SO(2)^{m}$$\n$SE(3)$ (Special Euclidean Group): represents the 6 degrees of freedom for the global position of the ligand relative to the protein (3 for translation, 3 for 3D rotation). $SO(2)^{m}$ (Special Orthogonal Group): Represents the 1D rotational angles (torsions) for the $m$ rotatable single bonds inside the ligand. The Forward Process (Adding Noise):\nDuring training, the model takes a perfectly bound protein-ligand co-crystal structure from the PDB. It applies a Stochastic Differential Equation (SDE) to gradually randomize the ligand’s translation, rotation, and torsional angles until the ligand’s pose is pure noise (completely detached and randomized).\nThe Reverse Process (Denoising to the Bioactive Pose):\nAt inference, we start with our random ETKDG vacuum conformer from Gate 2. The neural network’s job is to predicted the score, the gradient of the log probability density of the data at a given noise level $t$:\n$$s_{\\theta}(x, t) \\approx \\nabla_{x} \\log p_{t}(x)$$ By plugging this score network into a reverse-time SDE or ODE solver, the model iteratively “denoises” the ligand’s coordinates. It physically pulls the ligand into the pocket and twists its bonds until it perfectly conforms to the protein’s active site.\n5.3 The Computational Optimization: DiffDock-Pocket Standard DiffDock is designed for Blind Docking. It initializes the ligand far away from the protein and forces the diffusion model to search the entire surface area of the receptor to find the binding pocket.\nWhile scientifically impressive, blind docking is computationally expensive. The integration space for the $SE(3)$ translation diffusion scales cubically $(O(V^{3}))$ with the size of the bounding box. For target-specific generation, this is a massive waste of GPU cycles because we already know where the Mpro active site is (the catalytic dyad of His41 and Cys145).\nTo optimize this for our high-throughput funnel, the pipeline utilizes DiffDock-Pocket. Instead of sampling the initial translation noise from a wide distribution covering the whole protein, we heavily constrain the initial bounding box.\n# Conceptual representation of the Pocket-Constrained Diffusion # By limiting the translation variance, we skip the \"search\" phase # and dedicate all reverse-diffusion steps to \"refinement\" pocket_center = torch.tensor([10.0, -2.0, 23.0]) # Mpro Active Site Coords translation_variance = 5.0 # Constrained 5 Angstrom radius # Initialize ligand state close to the pocket ligand_pos = sample_gaussian(mean=pocket_center, var=translation_variance) By constraining the $SE(3)$ translation space, we achieve two things:\nMassive Speedup: We can drastically reduce the number of inference steps (e.g., from 40 steps to 15 steps) required by the ODE solver, because the model no longer has to drag the ligand across the protein surface. Higher Precision: 100% of the network’s capacity is spent on high-resolution torsional refinement $(SO(2)^{m})$ and resolving atomic clashes, rather than global pathfinding. 5.4 The Output The output of Gate 3a is a single, physics-informed docked_ligand.sdf file. We have successfully taken a hallucinatory text strings (SELFIES), filtered it for biological viability (Gate 1), given it 3D mass (Gate 2), and folded it into the target receptor (Gate 3a).\nWe now have a true physical complex. The final, definitive step is to accurately calculate the binding affinity $(pK_{d})$ of this complex using a model that fundamentally understands 3D spatial geometry: The EGNN.\n6. Gate 3b: $SE(3)$-Equivariant 3D Scoring (EGNN) By the end of Gate 3a, the pipeline has generated a chemically valid sequence, filtered it for biological safety, and used diffusion to fold it into a physically viable 3D pose inside the Mpro active site.\nThe final task is to act as an oracle: evaluating this 3D point cloud to predict the exact binding affinity $(pK_{d})$. This is the most computationally and mathematically demanding step in the entire architecture.\n6.1 The Equivariance Imperative Predicting molecular properties from 3D coordinates is notoriously difficult. If you need the raw $(X, Y, Z)$ coordinates of a protein-ligand complex into a standard Multi-Layer Perceptron (MLP) or a 3D-Convolutional Neural Network, the model will fail.\nThe reason is spatial orientation. If a protein is rotated by 90 degrees in space, its underlying biology and binding affinity remain exactly the same, but every single coordinate value changes completely. A standard neural network has to “re-learn” the same molecule form thousands of different angles (a brute-force approach called data augmentation), which is hopefully inefficient for complex point clouds.\nTo solve this, the pipeline’s scoring engine is an Equivariant Graph Neural Network (EGNN). It guarantees that if the input coordinates are rotated or translated, transformations define by the Special Euclidean group $SE(3)$, the internal vector representations update synchronously. This preserves the fundamental geometric relationships perfectly without requiring any artificial data augmentation.\n6.2 Data Engineering: Complex Graph Construction To train a model to predict real-world binding affinity, we cannot use generated data; we need wet-lab truth. The EGNN is trained on the PDBbind Refined Set, a highly curated database of experimentally resolved protein-ligand co-crystal structures.\nBefore the network can process these complexes, the build_complex_graph module translates them into spatial graphs. For every atom in both the protein and the ligand, we extract 10 specific RDKit features:\nAtomic Number Degree (Connectivity) Gasteiger Partial Charge Aromaticity Atomic Mass Explicit Valence Hydrophobicity (LogP contribution) Formal Charge Van der Waals Radius A binary flag (is_ligand) To make message passing computationally tractable, we define a $10.0$ Å pocket_radius around the ligand and discard the rest of the protein. We then compute the pairwise Euclidean distance matrix torch.cdist(prot_pos, lig_pos) and use a $5.0$ Å distance cutoff to create edges between any interacting atoms, establishing the paths for message passing.\n6.3 The Architecture The core of the model is the Gate3_EGNNScorrer. It takes the atomic features, 3D positions, and edge indices, and processes them through 6 layers of equivariant message passing.\nHere is the exact architecture block defining the network:\nclass Gate3_EGNNScorrer(nn.Module): def __init__(self, hidden_dim=256, num_layers=6, num_rbf=32): super().__init__() # 1. Input Encodings self.embedding = nn.Embedding(100, hidden_dim) self.feature_lin = nn.Linear(8, hidden_dim) # 2. Radial Basis Function (RBF) Initialization rbf_range = torch.linspace(0, 5, num_rbf) self.register_buffer('rbf_range', rbf_range) self.rbf_coeff = -0.5 / (self.rbf_range[1] - self.rbf_range[0]).item()**2 # 3. The Equivariant Layers self.layers = nn.ModuleList([EGNN_Layer(hidden_dim, num_rbf) for _ in range(num_layers)]) # 4. The Predictive Head self.mlp_head = nn.Sequential( nn.Linear(hidden_dim, 128), nn.SiLU(), nn.Dropout(0.3), nn.Linear(128, 1) # Outputs a single float: pKd (Binding Affinity) ) The Radial Basis Function (RBF) Expansion Notice the RBF initialization. Instead of operating on absolute coordinates, the EGNN operates entirely on relative distances. However, passing distance as a single scalar provides a weak gradient signal.\nDuring the forward pass, the model “smears” the continuous distance into 32 discrete, differentiable Gaussian bins (edge_attr):\ndiff = pos[edge_index[0]] - pos[edge_index[1]] dist = torch.sqrt(torch.sum(diff**2, dim=-1, keepdim=True) + 1e-8) edge_attr = torch.exp(self.rbf_coeff * (dist - self.rbf_range)**2) This provides a rich spatial embedding for the network to learn smooth physical interactions like Van der Waals forces.\n6.4 Inside the EGNN Layer: The Mathematics of Equivariance Inside each EGNN_Layer, three distinct Multi-Layer Perceptrons (MLPs) update the graph simultaneously. This is where the actual $SE(3)$ physics simulation occurs.\nThe Edge Update (edge_mlp): We compute the message $m_{ij}$ between atom $i$ and atom $j$ by concatenating their node features $h$ and the RBF distance embedding: $$m_{ij} = SiLU (W \\cdot \\left[h_{i},h_{j}, a_{ij} \\right] )$$ The Coordinate Update (coord_mlp)-The Equivariant step: the network updates the 3D coordinates by predicting a scalar weight (pos_weight) for every edge. It then multiplies this weight by the relative vector $(x_{i} - x_{j})$. Because we only scale the relative difference vector, this operation applies “push/pull forces” that are strictly $SE(3)$-equivariant. # Compute Coordinate Updates pos_weight = self.coord_mlp(m_ij) pos_update = coord_diff * torch.clamp(pos_weight, min=-10., max=10.) pos_aggr = scatter(pos_update.float(), row, dim=0, dim_size=pos.size(0), reduce='sum').to(pos.dtype) pos_new = pos + (pos_aggr / counts.to(pos.dtype)) The Feature Update (node_mlp)-The Invariant Step: The node features are updated by aggregating the message $m_{ij}$. Because the messages were derived from distances (which do not change when the molecule is rotated), the resulting node features are completely rotationally invariant. $$h_i^{l+1} = h_i^l + \\phi_h \\left( h_i^l, \\sum_{j \\neq i} m_{ij} \\right)$$\n6.5 The Architectural Trick: Ligand-Centric Readout After 6 layers of equivariant message passing, the protein pocket has exerted its “forces” on the ligand, and the ligand’s features reflect its environment.\nA standard Graph Neural Network would run a global mean pool over the entire graph to predict the final score. However, doing so would drown the signal of the tiny ligand (e.g., 40 atoms) in the massive noise of the protein pocket (e.g., 1000 atoms).\nInstead, the Gate3_EGNNScorrer employs a Ligand-centric Readout. Using the is_ligand boolean mask injected during graph construction, I slice the tensor to pool only the ligand atoms before passing it to the final MLP:\nligand_mask = (x[:, 9] == 1.0) h_ligand = h[ligand_mask] batch_ligand = batch[ligand_mask] # Pool ONLY the ligand's invariant representations if h_ligand.size(0) \u003e 0: pooled = global_mean_pool(h_ligand, batch_ligand) else: pooled = global_mean_pool(h, batch) return self.mlp_head(pooled) By forcing the MLP to predict binding affinity solely from the ligand’s final embedded state, the network must learn how to protein alters the ligand, rather than just memorizing the static macroscopic shape of the target pocket.\n6.6 Hardware Optimization: Bypassing the I/O Bottleneck Parsing complex PDB and SDF files with RDKit at runtime creates CPU bottleneck, starving the GPU and dropping the utilization to near 10%.\nTo solve this, I implemented an SSD Tensor Cache in train_egnn.py. During the first epoch, the CPU parses the RDKit files and instantly serializes the compiled PyTorch Geometric graphs directly to an NVMe SSD. For all subsequent epochs, the Dataloader bypasses RDKit entirely, streaming raw tensor memory straight to the GPU.\ncache_path = os.path.join(self.cache_fir, f\"{pdb_id}.pt\") # FAST PATH: If we already built this graph, load it from the SSD instantly if os.path.exists(cache_path): return torch.load(cache_path) Paired with torch.amp.autocast('cuda', dtype=torch.bfloat16) to optimize Tensor Core matrix multiplication without gradient underflow, this custom caching layer ensures the EGNN trains at absolute maximum hardware throughput.\n7. The Orchestrator: System Integration The models we discussed, SELFIES-GPT, the Multimodal ADMET Oracle, Diffdock-Pocket and the EGNN, are fundamentally different architectures operating on entirely different mathematical representations (1D sequences, 2D graphs, and 3D point clouds). To unify these, I built an Orchestrator(orchestrator.py). The orchestrator manages the handoff between the generative engine and the scoring gates, handling the data transformations (e.g., $SMILES \\rightarrow ETKDG conformers \\rightarrow DiffDock poses$) required at each step. When executed, the orchestrator:\nTriggers the autoregressive generation of Mpro-targeted SELFIES. Translates the SELFIES to SMILES and batches them through the 1D/2D ADMET Oracle (Gate 1). Takes the surviving “elite” molecules, generates their 3D ETKDG conformers, and saves them to temporary SDF files (Gate 2). Programmatically invokes the DIffDock-Pocket diffusion process to fold the ligands into the receptor (Gate 3a). Compiles the resulting 3D complexes into PyTorch Geometric tensors and runs the final EGNN scoring pass (Gate 3b). This entire funnel executes end-to-end without manual intervention, demonstrating the automated flow from generative text all the way to $SE(3)$ spatial scoring. LINK HERE\n8. Deployment and The UI Trade-off Deploying it to the web so that others can interact came with some trade-off. The project is deployed using a decoupled monorepo architecture:\nbackend/: Contains the FastAPI routing, model weights, and the Python ML logic. molecular-ensemble-ui/: The Vercel-deployed frontend dashboard for interactive exploration. The Compute Bottleneck: Web UX vs. Physics Simulation\nWhile Phase 1 and Gate 1 are highly optimized and can run live inference behind a web endpoint, Gate 3a introduces a severe constraint. Running reverse-diffusion over $SE(3)$ to fold a molecule into a protein pocket requires massive, sustained GPU compute. In a production web environment, forcing a user to wait minutes for a synchronous DiffDock batch to complete is an architectural anti-pattern that leads to browser timeouts and crashes queues.\nThe Solution: Honest Visualization\nTo solve this, the UI deployment utilizes a hybrid approach:\nLive Generation and Filtering: The UI can trigger SELFIES-GPT and the Gate 1 ADMET oracle dynamically. Precomputed Elites for 3D Scoring: For the final 3D docking and EGNN scoring phase, the dashboard transitions to visualizing a precomputed orchestrator.py run. Crucially, the data provenance is strictly maintained. The UI does not “fake” the pipeline by pasting randomly generated names over static scores. The dashboard exclusively displays the true “elite” molecules that legitimately generated via Phase 1, survived Gate 1, and were processed through DiffDock by the orchestrator.\nBy separating the heavy end-to-end compute script from the web visualization layer, the system maintains 100% scientific integrity while still providing a lightning fast, responsive dashboard for others to explore the physics grounded candidates.\n",
+  "wordCount" : "5490",
+  "inLanguage": "en",
+  "datePublished": "2026-11-23T00:00:00Z",
+  "dateModified": "2026-11-23T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "Lav-niya"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://lav-aniya.github.io/projects/molecular_ensemble/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Lav-Aniya's Site",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://lav-aniya.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://lav-aniya.github.io/" accesskey="h" title="Lav-Aniya&#39;s Site (Alt + H)">Lav-Aniya&#39;s Site</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://github.com/Lav-aniya" title="&lt;svg xmlns=&#34;http://www.w3.org/2000/svg&#34; width=&#34;24&#34; height=&#34;24&#34; viewBox=&#34;0 0 24 24&#34; fill=&#34;none&#34; stroke=&#34;currentColor&#34; stroke-width=&#34;2&#34; stroke-linecap=&#34;round&#34; stroke-linejoin=&#34;round&#34;&gt;&lt;path d=&#34;M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22&#34;&gt;&lt;/path&gt;&lt;/svg&gt;">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></span>
+                    
+                </a>
+            </li>
+            <li>
+                <a href="https://www.linkedin.com/in/your-profile-name/" title="&lt;svg xmlns=&#34;http://www.w3.org/2000/svg&#34; width=&#34;24&#34; height=&#34;24&#34; viewBox=&#34;0 0 24 24&#34; fill=&#34;none&#34; stroke=&#34;currentColor&#34; stroke-width=&#34;2&#34; stroke-linecap=&#34;round&#34; stroke-linejoin=&#34;round&#34;&gt;&lt;path d=&#34;M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z&#34;&gt;&lt;/path&gt;&lt;rect x=&#34;2&#34; y=&#34;9&#34; width=&#34;4&#34; height=&#34;12&#34;&gt;&lt;/rect&gt;&lt;circle cx=&#34;4&#34; cy=&#34;4&#34; r=&#34;2&#34;&gt;&lt;/circle&gt;&lt;/svg&gt;">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></span>
+                    
+                </a>
+            </li>
+            <li>
+                <a href="mailto:lavaniya.nen@gmail.com" title="&lt;svg xmlns=&#34;http://www.w3.org/2000/svg&#34; width=&#34;24&#34; height=&#34;24&#34; viewBox=&#34;0 0 24 24&#34; fill=&#34;none&#34; stroke=&#34;currentColor&#34; stroke-width=&#34;2&#34; stroke-linecap=&#34;round&#34; stroke-linejoin=&#34;round&#34;&gt;&lt;path d=&#34;M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z&#34;&gt;&lt;/path&gt;&lt;polyline points=&#34;22,6 12,13 2,6&#34;&gt;&lt;/polyline&gt;&lt;/svg&gt;">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+                    
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline
+    </h1>
+    <div class="post-description">
+      An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.
+    </div>
+    <div class="post-meta"><span title='2026-11-23 00:00:00 +0000 UTC'>November 23, 2026</span>&nbsp;·&nbsp;26 min&nbsp;·&nbsp;Lav-niya
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="multimodal-pipeline-for-target-specific-drug-discovery-from-selfies-to-3d-equivariance">Multimodal Pipeline for Target-Specific Drug Discovery: From SELFIES to 3D Equivariance<a hidden class="anchor" aria-hidden="true" href="#multimodal-pipeline-for-target-specific-drug-discovery-from-selfies-to-3d-equivariance">#</a></h1>
+<h2 id="introduction-the-funnel-philosophy">Introduction: The Funnel Philosophy<a hidden class="anchor" aria-hidden="true" href="#introduction-the-funnel-philosophy">#</a></h2>
+<p>Drug discovery is, at its core, a search space problem of incomprehensible scale. The theoritical chemical universe of synthetically viable, drug-like molecules is estimated to be around $10^{60}$. Even if we restrict ourselves to known, synthesizable libraries like Enamine REAL, we are still looking at billions of compounds.</p>
+<p>Traditional High-Throughput Screening (HTS) in a wet lab tops out at a few million compounds and costs millions of dollars. Standard computational Virtual Screening (VS) using classical physics engines like AutoDock Vina can process more, but it is still fundamentally a &ldquo;needle in a haystack&rdquo; approach; you are testing random molecules hoping one happens to fit your target receptor.</p>
+<p>Instead of searching a static library, the modern AI approach is <strong>De Novo Generation:</strong> teaching a model the grammar of chemistry and asking it to generate novel molecules specifically tailored for a target (in this case, the Mpro protease of SARS-CoV-2 from the COVID Moonshot dataset).</p>
+<p>However, you cannot simply plug a generative language model directly into a 3D physics engine. Physics-informed, Equivariant Graph Neural Networks (EGNNs) and diffusion-based docking models (Diffdock-Pocket) are computationally heavy. Running a 3D point-cloud evaluation on millions of raw, generated sequences is hardware-impossible, even on A100 clusters.</p>
+<p><strong>The Pipeline Architecture Overview</strong>
+The system is orchestrated to pass molecules through the following stages, ensuring that only the most viable, non-toxic, and highly specific candidates ever reach the final 3D physics engine:</p>
+<ul>
+<li><strong>Phase 1: De Novo Generation (The Source)</strong>. We abandon SMILES strings which frequently result in mathematically invalid outputs during autoregressive sampling, in favor of SELFIES. A Causal Transformer (<code>SELFIES-GPT</code>) is pre-trained on the MOSES dataset to learn general valency, then fine-tuned on the COVID Moonshot dataset to generate novel Mpro-targeted geometries.</li>
+<li><strong>Gate 1: The Multimodal ADMET Oracle (1D + 2D).</strong> Before calculating spatial binding affinity, a molecule must be biologically viable. This gates uses a <code>MultimodalFusionScorer</code> that cross-attends a 1D sequence (via a SMILES Transformer) with 2D topological graph features (via a Directed-MPNN). It acts as a high-speed filter to score Toxicity, Solubility, Mutagenicity, and hERG liability. Molecules that fail here are instantly discarded.</li>
+<li><strong>Gate 2: The Dimensionality Upgrade (2D -&gt; 3D).</strong> The surviving &ldquo;elite&rdquo; molecules are upgraded from flat topological graphs into 3D conformers in a vacuum, preparing them for spatial interaction.</li>
+<li><strong>Gate 3a: Physics-Informed Posing (DiffDock Pocket).</strong> To evaluate binding, the ligand must be accurately positioned inside the protein. We utilize DiffDock specifically targeted at the Mpro active site to generate physically viable, clash-free docking poses.</li>
+<li><strong>Gate 3b: <em>SE(3)</em>-Equivariant Scoring (EGNN).</strong> The final, most computationally expensive step. An Equivariant Graph Neural Network (<code>Gate3_EGNNScorrer</code>) processes the 3D point cloud of the protein-ligand complex. Because it is strictly <em>SE(3)</em> equivariant, it understands the 3D spatial geometry (push/pull atomic forces) regardless of rotational orientation, predicting a highly accurate binding affinity ($pK_{d}$).</li>
+</ul>
+<p>Throughout this project, data integrity was a strict architectural constraint. There is no &ldquo;faking&rdquo; data downstream; the final UI and evaluation metrics strictly utilize the precomputed elites that legitimately survived Gate 1, preserving their original, unmodified generated geometries through the 3D scoring phase.</p>
+<p>In the following sections, we will open up the source code for each of these models, exploring the mathematical necessity of the architectures, the loss functions, and the hardware-specific optimizations required to train them.</p>
+<h2 id="2-phase-1-de-novo-generation-with-selfies-gpt">2. Phase 1: De Novo Generation with SELFIES-GPT<a hidden class="anchor" aria-hidden="true" href="#2-phase-1-de-novo-generation-with-selfies-gpt">#</a></h2>
+<p>To discover a novel Mpro inhibitor, the pipeline must hallucinate entirely new chemistry. We treat molecular geenration as an autoregressive language modeling task. However, applying Natural Language Processsing to chemistry requires solving a fundamental representational bottleneck.</p>
+<h4 id="21-the-representation-bottleneck-selfies-vs-smiles">2.1 The Representation Bottleneck: SELFIES vs. SMILES<a hidden class="anchor" aria-hidden="true" href="#21-the-representation-bottleneck-selfies-vs-smiles">#</a></h4>
+<p>The industry standard, SMILES, is highly fragile. It relies on strict topological syntax for branching <code>()</code> and ring closures <code>1...1</code>. In an autoregressive generation scenario, if the model predicts <code>C1CCCCC</code> but fails to predict the closing <code>1</code> due to stochastic sampling, the entire string collapses into a mathematically invalid graph.</p>
+<p>To guarantee 100% syntactical validity, the pipeline&rsquo;s <code>phase1_tokenizer.py</code> translates all SMILES into <strong>SELFIES</strong> (SELF-referencing Embedded Strings). SELFIES operates on a Chomsky Type-0 grammar designed for machine learning. Every permutation of a SELFIES sequence maps to a physically valid molecular graph, forcing the loss landscape to reflect actual chemical properties rather than syntactical errors.</p>
+<h4 id="22-model-architecture-the-causal-transformer">2.2 Model Architecture: The Causal Transformer<a hidden class="anchor" aria-hidden="true" href="#22-model-architecture-the-causal-transformer">#</a></h4>
+<p>The core engine is <code>SELFIESGeneratorGPT</code>, a decoder-only Transformer built natively in PyTorch. The model projects tokenized discrete inputs into a continuous embedding space $d_{model} = 256$, across 6 layers and 8 attention heads.</p>
+<p>Because Transformers are permutation-invariant, spatial order is injected using absolute sinusodial Positional Encoding before the sequence enters the attention blocks:</p>
+<p>$$PE_{(pos,2i)} = sin \left( \frac{pos}{(1000^{2i/d_{model}})} \right)$$
+$$PE_{(pos,2i+1)} = cos \left( \frac{pos}{(1000^{2i/d_{model}})} \right)$$</p>
+<p><strong>The Causal Masking Logic</strong>
+To prevent the model from &ldquo;cheating&rdquo; by looking at future tokens, we apply a strict causal mask M. This is an upper-triangular matrix where the upper elements are set to $- \infty$ (or in PyTorch&rsquo;s boolean masking, <code>True</code> means &ldquo;ignore&rdquo;).</p>
+<p>When calculating scaled Dot-Product Attention, this mask is added to the unnormalized attention logits before the softmax operation:</p>
+<p>$$Attention(Q, K, V) = softmax \left( \frac{QK^{T}}{\sqrt{d_{k}}} + M \right) V$$
+In <code>selfies_gpt.py</code>, instead of relying on external decoder modules, I implemented this by passing a strictly generated upper-triangular matrix directly into PyTorch&rsquo;s <code>TransformerEncoderLyar</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, src):
+</span></span><span style="display:flex;"><span>    device <span style="color:#f92672">=</span> src<span style="color:#f92672">.</span>device
+</span></span><span style="display:flex;"><span>    seq_len <span style="color:#f92672">=</span> src<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    pad_mask <span style="color:#f92672">=</span> (src <span style="color:#f92672">==</span> self<span style="color:#f92672">.</span>pad_idx)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Generate the strict Causal Mask matrix</span>
+</span></span><span style="display:flex;"><span>    causal_mask <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>triu(torch<span style="color:#f92672">.</span>ones(seq_len, seq_len, dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>bool, device<span style="color:#f92672">=</span>device), diagonal<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    src_emb <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>embedding(src) <span style="color:#f92672">*</span> math<span style="color:#f92672">.</span>sqrt(self<span style="color:#f92672">.</span>d_model)
+</span></span><span style="display:flex;"><span>    src_emb <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>pos_encoder(src_emb<span style="color:#f92672">.</span>transpose(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>))<span style="color:#f92672">.</span>transpose(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    output <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>transformer_stack(
+</span></span><span style="display:flex;"><span>        src_emb, 
+</span></span><span style="display:flex;"><span>        mask<span style="color:#f92672">=</span>causal_mask,             
+</span></span><span style="display:flex;"><span>        src_key_padding_mask<span style="color:#f92672">=</span>pad_mask, 
+</span></span><span style="display:flex;"><span>        is_causal<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span> 
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>fc_out(output)
+</span></span></code></pre></div><p>This forces the prediction for token $x_{t}$ to be strictly conditioned on the joint probability distribution of preceding tokens: $P(x_{t} | x_{1}, x_{2}, x_{3},&hellip;, x_{t-1})$.</p>
+<h4 id="23-training-strategy-and-hardware-optimization">2.3 Training Strategy and Hardware Optimization<a hidden class="anchor" aria-hidden="true" href="#23-training-strategy-and-hardware-optimization">#</a></h4>
+<p>We utilize a two-stage transfer learning pipeline:</p>
+<ol>
+<li><strong>General Domain (MOSES):</strong> The model is pre-trained from scratch on ~2M molecules to learn baseline chemical valency.</li>
+<li><strong>Target Domain (COVID Moonshot):</strong> Pre-trained weights are loaded via <code>strict=True</code>, and the model is fine-tuned on the COVID Moonshot dataset to shift the distribution toward Mpro-active chemotypes.</li>
+</ol>
+<p><strong>The Fine-Tuning Loop (<code>finetune_selfies_gpt.py</code>)</strong></p>
+<p>The objective function is Cross-Entropy Loss applied across the flattened sequence, explicitly ignoring the padding index to prevent the model from optimizing for empty space:</p>
+<p>$$\mathcal{L} = -\sum_{c=1}^{V} y_{o,c} \log(p_{o,c})$$
+<em>(where $V$ is the vocab size, and $p_{o,c}$ is the predicted probability of the correct token).</em></p>
+<p>To push maximum throughput on A100 GPU, the fine-tuning script abandons standard FP32 math.</p>
+<ol>
+<li><strong>TF32 and BFloat16:</strong> TensorFloat-32 is enabled globally, and the forward pass is scoped inside an <code>autocast('cuda', dtype=torch.bfloat16)</code> context. <code>bfloat16</code> retains the 8-bit exponent of FP32 (preventing underflow) while dropping the mantissa to 7 bits, allowing A100 Tensor Cores to process the math natively.</li>
+<li><strong>Kernel Fusion:</strong> In PyTorch 2.0+, <code>torch.compile</code> is invoked. This traces the computation graph and fuses pointwise operations (like the GELU activations and Dropouts inside the Transformer layers) into optimized Triton kernels, vastly reducing memory bandwidth overhead.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Enable Tensor Cores for matrix math</span>
+</span></span><span style="display:flex;"><span>torch<span style="color:#f92672">.</span>backends<span style="color:#f92672">.</span>cuda<span style="color:#f92672">.</span>matmul<span style="color:#f92672">.</span>allow_tf32 <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Kernel Fusion for A100</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> int(torch<span style="color:#f92672">.</span>__version__<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#39;.&#39;</span>)[<span style="color:#ae81ff">0</span>]) <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>    model <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>compile(model)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>optimizer <span style="color:#f92672">=</span> optim<span style="color:#f92672">.</span>AdamW(model<span style="color:#f92672">.</span>parameters(), lr<span style="color:#f92672">=</span><span style="color:#ae81ff">5e-5</span>, weight_decay<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-4</span>)
+</span></span><span style="display:flex;"><span>criterion <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>CrossEntropyLoss(ignore_index<span style="color:#f92672">=</span>pad_idx)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Inside the training loop:</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> autocast(<span style="color:#e6db74">&#39;cuda&#39;</span>, dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>bfloat16):
+</span></span><span style="display:flex;"><span>    logits <span style="color:#f92672">=</span> model(x)
+</span></span><span style="display:flex;"><span>    logits_flat <span style="color:#f92672">=</span> logits<span style="color:#f92672">.</span>view(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, tokenizer<span style="color:#f92672">.</span>vocab_size)
+</span></span><span style="display:flex;"><span>    y_flat <span style="color:#f92672">=</span> y<span style="color:#f92672">.</span>view(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    loss <span style="color:#f92672">=</span> criterion(logits_flat, y_flat)
+</span></span></code></pre></div><p>Because <code>torch.compile</code> modifies the internal module reference, saving the weigths directly would corrupt the checkpoint for later inference. The script cleanly unwraps the compiled model via <code>unwrapped_model = model._orig_mod</code> before saving the state dictionary.</p>
+<h4 id="24-inference-and-generation">2.4 Inference and Generation<a hidden class="anchor" aria-hidden="true" href="#24-inference-and-generation">#</a></h4>
+<p>During inference, we seed the model with a start token. The model outputs a probability distribution over the vocabulary space of $V$ tokens for position $t$. We sample the next token (often scaling the logits by a temperature parameter $T$ to control diversity: $q_{i} = \frac{exp(z_{i}/T)}{\sum_{j} exp(z_{i} / T)}$, append it to the sequence, and feed the new sequence back into the model until an End-of-Sequence token is generated.</p>
+<p>This engine successfully generates novel, Mpro-biased SELFIES strings. However, a generated sequence does not guarantee biological safety. For that, these molecules must pass through Gate 1.</p>
+<h4 id="25-training-dynamics-and-transfer-learning-results">2.5 Training Dynamics and Transfer Learning Results<a hidden class="anchor" aria-hidden="true" href="#25-training-dynamics-and-transfer-learning-results">#</a></h4>
+<p>To validate that the Causal Transformer was actually leraning the Chomsky Type-0 grammar of SELFIES rather than just memorizing sequences, I tracked the autoregressive loss across both general and target-specific training phases.</p>
+<p><strong>Phase 1A: Base Chemical Grammar (MOSES Dataset)</strong>
+During the initial pre-training on the MOSES dataset, the model was tasked with learning general valency, ring structure, and drug-likeness.</p>
+<p>[PHASE1_traning_curves.jpg]</p>
+<p>As shown in the epoch convergence plot, the average cross-entropy loss dropped sharply from initial initialization and smoothly asymptoted to a final loss of <strong>0.563</strong> over 20 epochs. The stability of the batch loss (left) demonstrates that the model successfully mapped the foundational rules of organic chemistry into its 256-dimensional embedding space without vanishing gradients.</p>
+<p><strong>Phase 1B: Target Specificity (COVID Moonshot)</strong>
+Once the model understood basic chemistry, I initiated transfer learning, freezing the base representation and fine-tuning specifically on the COVID Moonshot dataset to bias the generator toward Mpro-active chemotypes.</p>
+<p>[phase1_finetuning_curves.jpg]</p>
+<p>Fine-tuning language models on highly specific, smaller datasets often leads to catastrophic forgetting or chaotic loss spikes. However, thanks to the <code>bfloat16</code> mixed-precision environment and A100 kernel fusion, the fine-tuning convergence was remarkably stable. Over 10 epochs, the model smoothly minimized down to a final loss of <code>0.670</code>. This proves the model successfully learned the targeted spatial motifs necessary for the Mpro pocket while retaining its foundational chemical grammar.</p>
+<h2 id="3-gate-1-the-multimodal-admet-oracle-1d--2d">3. Gate 1: The Multimodal ADMET Oracle (1D + 2D)<a hidden class="anchor" aria-hidden="true" href="#3-gate-1-the-multimodal-admet-oracle-1d--2d">#</a></h2>
+<p>A generative model optimizing strictly for protein binding will often hallucinate highly reactive, toxic, or insoluble molecules. In drug discovery, ADMET (Absorption, Distribution, Metabolism, excretion, and Toxicity) is just as critical as binding affinity.</p>
+<p>however, chemical properties are dictated by different dimensional representations. Some properties (like logP or solubility) are easily captured by 1D sequences motifs, while others (like steric hindrance or specific toxicity alerts) require an understanding of 2D graph topology.</p>
+<p>To create a high-speed, highly accurate ADMET filter, Gate 1 employs a <strong>Multimodal Fusion Architecture</strong>. It independently processes the molecule as a 1D sequence and a 2D graph, dynamically fusing the representations before passing them to a multi-task prediction head.</p>
+<h4 id="31-the-1d-sequence-encoder-smiles-transformer">3.1 The 1D Sequence Encoder: SMILES Transformer<a hidden class="anchor" aria-hidden="true" href="#31-the-1d-sequence-encoder-smiles-transformer">#</a></h4>
+<p>While Phase 1 uses SELFIES for autoregressive generation, Gate 1 utilizes SMILES. Because Gate 1 is a predictive filter (not a generator), the fragility of SMILES is no longer an issue, and SMILES strings often provide a more compact representation of functional groups for Bidirectional Transformers.</p>
+<p>The 1D encoder (<code>transformer.py</code>) is a 4-layer, 8-head BERT-style Transformer Encoder ($d_{model} = 128$).</p>
+<p><strong>Pre-training via masked language Modeling (MLM)</strong></p>
+<p>Before predicting ADMET properties, the Transformer must understand chemistry. I built a custom <code>DataCollatorForMLM</code> that dynamically pads sequences and applies the classic 80/10/10 masking rule to 15% of the tokens:</p>
+<ul>
+<li>80% of the time, the token is replaced with <code>[MASK]</code>.</li>
+<li>10% of the time, it is replaced with a random token (forcing the model to rely on contextual correction).</li>
+<li>10% of the time, it is left unchanged (teaching the model that the input might already be correct).</li>
+</ul>
+<p><strong>Engineering Detail: The A100 Fast-Path Crash</strong></p>
+<p>During heavily batched mixed-precision training on A100 GPUs, PyTorch&rsquo;s native <code>Nestedtensor</code> &ldquo;Fast Path&rdquo; for Transformers frequently triggered memory access violations when dealing with dynamically padded SMILES sequences. To ensure stability during the 20-epoch pre-training loop, I explicitly disabled it inside the encoder block:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>self<span style="color:#f92672">.</span>transformer_encoder <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>TransformerEncoder(encoder_layer, num_layers<span style="color:#f92672">=</span>num_layers)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># FIXING THE A100 CRASH</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Disables the &#34;Fast Path&#34; optimization to prevent memory violations on dynamic padding</span>
+</span></span><span style="display:flex;"><span>self<span style="color:#f92672">.</span>transformer_encoder<span style="color:#f92672">.</span>enable_nested_tensor <span style="color:#f92672">=</span> <span style="color:#66d9ef">False</span>
+</span></span></code></pre></div><p>During the forward pass, we throw away the rest of the sequence and extract only the <code>[CLS]</code> token at index 0, yielding a continuous vector representation of the 1D sequence.</p>
+<h4 id="32-the-2d-topological-encoder-directed-mpnn">3.2 The 2D Topological Encoder: Directed-MPNN<a hidden class="anchor" aria-hidden="true" href="#32-the-2d-topological-encoder-directed-mpnn">#</a></h4>
+<p>Standard Graph Convolutional Networks (GCNs) process molecules by passing messages between atoms (nodes). This leads to a severe problem known as &ldquo;<strong>tottering.</strong>&rdquo; A message will travel from Atom A to Atom B at step $t$, and then bounce right back from Atom B to Atom A at step $t + 1$. This creates an artificial echo chamber of redundant noise, drowning out the actual topological structure of the rings and chains.</p>
+<p>To solve this, the pipeline uses a <strong>Directed Message Passing Neural Network (D-MPNN)</strong>(<code>D_MPNN.py</code>). Instead of updating node states, it updates <em>directed edge states</em> (bonds).</p>
+<p>let $h_{vw}^{(t)}$ be the hidden state of the directed bond from atom $v$ to atom $w$. To update this bond, we sum the messages from all incoming bonds to $v$, <strong>subtracting the exact reverse bond</strong> $w \rightarrow v$ :</p>
+<p>$$m_{vw}^{(t+1)} = \sum_{k \in N(v) \setminus {w}} h_{kv}^{(t)}$$
+In the PyTorch Geometric implementation, this requires maintaining an index to quickly grab the reverse of every edge:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Create an index to quickly grab the reverse of every edge</span>
+</span></span><span style="display:flex;"><span>num_edges <span style="color:#f92672">=</span> edge_index<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>reverse_indices <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>arange(num_edges, device<span style="color:#f92672">=</span>x<span style="color:#f92672">.</span>device)
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Swap evens and odds: [1, 0, 3, 2, 5, 4 ...]</span>
+</span></span><span style="display:flex;"><span>reverse_indices[<span style="color:#ae81ff">0</span>::<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>arange(<span style="color:#ae81ff">1</span>, num_edges, <span style="color:#ae81ff">2</span>, device<span style="color:#f92672">=</span>x<span style="color:#f92672">.</span>device)
+</span></span><span style="display:flex;"><span>reverse_indices[<span style="color:#ae81ff">1</span>::<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>arange(<span style="color:#ae81ff">0</span>, num_edges, <span style="color:#ae81ff">2</span>, device<span style="color:#f92672">=</span>x<span style="color:#f92672">.</span>device)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Directed Message Passing</span>
+</span></span><span style="display:flex;"><span>messages_to_edges <span style="color:#f92672">=</span> node_messages[sender_nodes]
+</span></span><span style="display:flex;"><span>reverse_edge_hidden <span style="color:#f92672">=</span> edge_hidden[reverse_indices]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># The Chemprop D-MPNN core logic: subtract the reverse edge</span>
+</span></span><span style="display:flex;"><span>directed_messages <span style="color:#f92672">=</span> messages_to_edges <span style="color:#f92672">-</span> reverse_edge_hidden
+</span></span><span style="display:flex;"><span>edge_update <span style="color:#f92672">=</span> F<span style="color:#f92672">.</span>relu(self<span style="color:#f92672">.</span>edge_norms[i](self<span style="color:#f92672">.</span>W_h[i](directed_messages)))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Add the update to the INITIAL state h^0 to prevent oversmoothing</span>
+</span></span><span style="display:flex;"><span>edge_hidden <span style="color:#f92672">=</span> F<span style="color:#f92672">.</span>relu(initial_edge_hidden <span style="color:#f92672">+</span> edge_update)
+</span></span></code></pre></div><p>After updating the edges across $N$ layers, the edge states are aggregated back to the receiver atoms via  a highly efficient <code>scatter</code> reduction (which acts like a SQL <code>GROUP BY</code> operation for tensors).</p>
+<p>Finally, a <strong>Global Attention Pool (GATE network)</strong> calculates a dynamic importance score (0 to 1) for each atom, outputting a single 128-dimensional vector representing the 2D topology of the molecule.</p>
+<h4 id="33-the-cross-attention-fusion-layer">3.3 The Cross-Attention Fusion Layer<a hidden class="anchor" aria-hidden="true" href="#33-the-cross-attention-fusion-layer">#</a></h4>
+<p>We now have two representations: a 1D sequence vector and a 2D graph vector. Simple concatenation ($[v_{1D}, v_{2D}]$) is suboptimal because it doesn&rsquo;t allow the two modalities to interact contextually.</p>
+<p>Instead, <code>fusion_layer.py</code> implements a <strong>Cross-Attention Mechanism</strong>.
+The GNN topological vector acts as the Query ($Q$), while the full, unspooled Transformer sequence acts as the Keys ($K$) and Values ($V$) :</p>
+<p>$$Fused = softmax \left( \frac{Q_{gnn}K^{T}<em>{transformer}}{\sqrt{d</em>{k}}} \right) V_{transformer}$$
+This allows the topological structure of the molecule to &ldquo;look&rdquo; across the 1D sequence and attend specifically to the structural motifs that match its graph, creating a deeply fused representation before passing it to a shared dense backbone.</p>
+<h4 id="34-multi-task-learning-via-dynamic-uncertainty-weighting">3.4 Multi-Task Learning via Dynamic Uncertainty Weighting<a hidden class="anchor" aria-hidden="true" href="#34-multi-task-learning-via-dynamic-uncertainty-weighting">#</a></h4>
+<p>The fused vector is passed to four distinct prediction heads: Hepatoxicity (Classification), Mutagenicity (Classification), Solubility (Regression), and hERG Liability (Classification).</p>
+<p>Training a Multi-Task Learning (MTL) network is notoriously difficult because gradients from different tasks often fight each other. Furthermore, some datasets (like hERG classifications) are highly noisy and prone to false positives in the lab. If we apply equal loss weights, the network will destroy its shared backbone trying to fit the hERG noise.</p>
+<p>To prevent this, I implemented <strong>Homoscedastic Uncertainty Weighting</strong> (<code>custom_lossfunction.py</code>). Rather than manually tuning hyperparameter weights for each task, the model initializes four learnable parameters log ($\sigma_{i}^{2}$).</p>
+<p>The dynamic loss function is defined as:</p>
+<p>$$\mathcal{L}<em>{total} = \sum</em>{i=1}^{4} \left( \frac{1}{2\sigma_i^2}\mathcal{L}<em>i + \frac{\log(\sigma_i^2)}{2} \right)$$
+If the hERG dataset is producing chaotic, contradictory gradients, the model will naturally increase $\sigma</em>{hERG}^{2}$ to minimize the overall loss. This effectively down-weights the hERG gradient contribution dynamically, acting as a learned, self-adjusting temperature scale.</p>
+<p>In code, this is implemented using $log(variance)$ for numerical stability to avoid division by zero:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DynamicMultiTaskLoss</span>(nn<span style="color:#f92672">.</span>Module):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, num_tasks<span style="color:#f92672">=</span><span style="color:#ae81ff">4</span>, base_weights<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>):
+</span></span><span style="display:flex;"><span>        super(DynamicMultiTaskLoss, self)<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>num_tasks <span style="color:#f92672">=</span> num_tasks
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># To permanently weaken noisy datasets</span>
+</span></span><span style="display:flex;"><span>        base_weights <span style="color:#f92672">=</span> base_weights <span style="color:#f92672">or</span> [<span style="color:#ae81ff">1.0</span>] <span style="color:#f92672">*</span> num_tasks
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>register_buffer(<span style="color:#e6db74">&#39;base_weights&#39;</span>, torch<span style="color:#f92672">.</span>tensor(base_weights, dtype<span style="color:#f92672">=</span>torch<span style="color:#f92672">.</span>float32))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Learnable variance parameters initialized to 0 (equal weight of 1.0)</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>log_vars <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Parameter(torch<span style="color:#f92672">.</span>zeros(num_tasks))
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>bce_loss <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>BCEWithLogitsLoss()  
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>mse_loss <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>MSELoss()            
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">forward</span>(self, masked_preds, masked_targets):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Uncertainty weighting: Loss * exp(-log_var) + (log_var / 2)</span>
+</span></span><span style="display:flex;"><span>        precision <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>exp(<span style="color:#f92672">-</span>self<span style="color:#f92672">.</span>log_vars[i])
+</span></span><span style="display:flex;"><span>        dynamic_loss <span style="color:#f92672">=</span> (loss <span style="color:#f92672">*</span> precision) <span style="color:#f92672">+</span> (self<span style="color:#f92672">.</span>log_vars[i] <span style="color:#f92672">/</span> <span style="color:#ae81ff">2.0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        final_task_loss <span style="color:#f92672">=</span> dynamic_loss <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>base_weights[i]
+</span></span><span style="display:flex;"><span>        total_loss <span style="color:#f92672">+=</span> final_task_loss
+</span></span><span style="display:flex;"><span>        
+</span></span></code></pre></div><p>By adding a <code>base_weights</code> multiplier, I maintain the ability to manually handicap inherently unreliable assays permanently, while letting the model fine-tune the relative importance of the remaining tasks epoch-by-epoch.</p>
+<p>Molecules that survive this rigorous ADMET filtering are deemed &ldquo;elite.&rdquo; They are chemically valid, target-biased, non-toxic, and highly soluble. However, they are still just flat sequences and graphs. To determine if they actually bind to the Mpro pocket, we must pull them into the third dimension.</p>
+<h4 id="35-representation-learning-base-convergence">3.5 Representation Learning: Base Convergence<a hidden class="anchor" aria-hidden="true" href="#35-representation-learning-base-convergence">#</a></h4>
+<p>Before the Multimodal Fusion layer can accurately predict complex biological ADMET properties (like hERG liability or Hepatotoxicity), the underlying graph encoders must learn robust baseline representations of molecular topology.</p>
+<p>To achieve this, the base graph network was pre-trained on the GuacaMol dataset.</p>
+<p>[loss_curve.png]</p>
+<p>The resulting training curve is textbook example of healthy generalization. Over 20 epochs, the cross-entropy loss drops from nearly 0.400 down to roughly 0.205. More importantly, the Validation Loss (orange) tracks the Training Loss (blue) almost perfectly throughout the entire run.</p>
+<p>In geometric deep learning, graph networks are notoriously prone to overfitting due to the sparsity of topological features. This tight coupling between train and validation loss proves that the message-passing architecture is learning universally applicable chemical representations, rather than just memorizing the GuacaMol training graphs. This creates a highly stable, generalized topological vector to feed into the Cross-Attention Fusion layer for the final multi-task ADMET predictions.</p>
+<h2 id="4-gate-2-bridging-the-dimensional-gap-2d-to-3d">4. Gate 2: Bridging the Dimensional Gap (2D to 3D)<a hidden class="anchor" aria-hidden="true" href="#4-gate-2-bridging-the-dimensional-gap-2d-to-3d">#</a></h2>
+<p>Up to this point in the pipeline, our generated molecules exist purely in mathematical abstraction, as sequences of tokens or 2D topological graphs. However, biology operates in three dimensions. The binding affinity of an Mpro inhibitor is strictly governed by spatial interactions: hydrogen bonds, Van der Waals forces, and steric clashes inside the protein pocket.</p>
+<p>Before we can evaluate how a ligand interacts with a protein, we must first collapse the 2D graph into a physically viable 3D object.</p>
+<p><strong>The ETKDG Conformer Generation</strong></p>
+<p>Generating a 3D structure from a 2D graph is a non-trivial inverse problem. A single molecule can adopt millions of different 3D shapes (conformers) by rotating around its single bonds.</p>
+<p>For this initial transformation, Gate 2 relies on RDKits&rsquo;s <strong>ETKDG</strong> (Experimental-Torsion Knowledge Distance Geometry) algorithm. ETKDG improves upon standard distance geometry by incorporating experimental knowledge from the Cambridge Structural Database (CSD).</p>
+<p>Instead of randomly embedding the atoms and minimizing them with a generic force field (like MMFF94), ETKDG applies basic physical constraints:</p>
+<ul>
+<li><strong>Distance Bounds:</strong> Ensuring bond lengths and angles match established chemical atoms.</li>
+<li><strong>Torsional Preferences:</strong> Biasing the dihedral angles of the generated conformer to match experimentally observed low-energy states.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Generate initial 3D Conformer in a vacuum</span>
+</span></span><span style="display:flex;"><span>mol <span style="color:#f92672">=</span> Chem<span style="color:#f92672">.</span>MolFromSmiles(smiles)
+</span></span><span style="display:flex;"><span>mol <span style="color:#f92672">=</span> Chem<span style="color:#f92672">.</span>AddHs(mol) <span style="color:#75715e"># Explicit hydrogens are critical for 3D physics</span>
+</span></span><span style="display:flex;"><span>AllChem<span style="color:#f92672">.</span>EmbedMolecule(mol, AllChem<span style="color:#f92672">.</span>ETKDG())
+</span></span></code></pre></div><p>The output of Gate 2 is a chemically accurate 3D molecule. However, this conformer is generated <em>in a vacuum</em>. The lowest-energy shape a molecule takes in empty space is rarely the shape it adopts when binding to a protein (the bioactive pose). To find that active pose, we must move to Gate 3a.</p>
+<h2 id="5-gate-3a-physics-informed-posing-with-diffdock-pocket">5. Gate 3a: Physics-Informed Posing with Diffdock-Pocket<a hidden class="anchor" aria-hidden="true" href="#5-gate-3a-physics-informed-posing-with-diffdock-pocket">#</a></h2>
+<p>By the end of Gate 2, we have used ETKDG to generate a valid, low-energy 3D conformer of our generated molecule. However, this conformer was generated <em>in a vacuum</em>. When a ligand enters a protein pocket, it twists, folds, and adapts its shape to maximize favorable interactions (hydrogen bonds, Van der Waals forces) and minimizes steric clashes..</p>
+<p>To evaluate if our generated molecule actually binds to the Mpro active site, we must find this <strong>bioactive pose.</strong></p>
+<h4 id="51-the-failure-of-classical-search-algorithms">5.1 The Failure of Classical Search Algorithms<a hidden class="anchor" aria-hidden="true" href="#51-the-failure-of-classical-search-algorithms">#</a></h4>
+<p>For decades, the industry standard for this step has been classical docking softwares like AutoDock Vina, Glide, or SMINA. These tools treat docking as a stochastic search problem. They place the ligand in the pocket, randomly mutate its translation, rotation, and dihedral (torsional) angles, and calculate and empirical energy score.</p>
+<p>This breaks down at scale for two reasons:</p>
+<ol>
+<li><strong>The Combinatorial Explosion:</strong> A ligand with $m$ rotatable bonds has an exponential number of possible conformations. Searching this highly non-convex energy landscape using Genetic Algorithms or Monte Carlo sampling almost guarantees getting trapped in a local minimum.</li>
+<li><strong>Empirical Scoring:</strong> Classical scoring functions heavily approximate quantum mechanics. They often fail to correctly penalize subtle steric clashes, leading to physically impossible overlapping atoms.</li>
+</ol>
+<p>To bypass this, the pipeline treats docking not as a search problem, but as a <strong>Generative Modeling Problem</strong> using Diffusion.</p>
+<h4 id="52-generative-diffusion-over-se3-times-so2m">5.2 Generative Diffusion over $SE(3) \times SO(2)^{m}$<a hidden class="anchor" aria-hidden="true" href="#52-generative-diffusion-over-se3-times-so2m">#</a></h4>
+<p>When we think of diffusion models (like Midjourney or Stable Diffusion), we think of adding Gaussian noise to 2D pixel arrays. You cannot do this with molecules. If you add independent Gaussian noise to the X, Y, Z coordinates of every atom, you will tear the bonds apart and destroy the molecule&rsquo;s chemical identity.</p>
+<p>Instead, <strong>DiffDock</strong> operates on the natural physical degrees of freedom of the ligand. It diffuses over a specific mathematical manifold, a product space defined as:</p>
+<p>$$\mathcal{M} = SE(3) \times SO(2)^{m}$$</p>
+<ul>
+<li>$SE(3)$ <strong>(Special Euclidean Group):</strong> represents the 6 degrees of freedom for the global position of the ligand relative to the protein (3 for translation, 3 for 3D rotation).</li>
+<li>$SO(2)^{m}$ <strong>(Special Orthogonal Group):</strong> Represents the 1D rotational angles (torsions) for the $m$ rotatable single bonds inside the ligand.</li>
+</ul>
+<p><strong>The Forward Process (Adding Noise):</strong></p>
+<p>During training, the model takes a perfectly bound protein-ligand co-crystal structure from the PDB. It applies a Stochastic Differential Equation (SDE) to gradually randomize the ligand&rsquo;s translation, rotation, and torsional angles until the ligand&rsquo;s pose is pure noise (completely detached and randomized).</p>
+<p><strong>The Reverse Process (Denoising to the Bioactive Pose):</strong></p>
+<p>At inference, we start with our random ETKDG vacuum conformer from Gate 2. The neural network&rsquo;s job is to predicted the <strong>score</strong>, the gradient of the log probability density of the data at a given noise level $t$:</p>
+<p>$$s_{\theta}(x, t) \approx \nabla_{x} \log p_{t}(x)$$
+By plugging this score network into a reverse-time SDE or ODE solver, the model iteratively &ldquo;denoises&rdquo; the ligand&rsquo;s coordinates. It physically pulls the ligand into the pocket and twists its bonds until it perfectly conforms to the protein&rsquo;s active site.</p>
+<h4 id="53-the-computational-optimization-diffdock-pocket">5.3 The Computational Optimization: DiffDock-Pocket<a hidden class="anchor" aria-hidden="true" href="#53-the-computational-optimization-diffdock-pocket">#</a></h4>
+<p>Standard DiffDock is designed for <strong>Blind Docking</strong>. It initializes the ligand far away from the protein and forces the diffusion model to search the entire surface area of the receptor to find the binding pocket.</p>
+<p>While scientifically impressive, blind docking is computationally expensive. The integration space for the $SE(3)$ translation diffusion scales cubically $(O(V^{3}))$ with the size of the bounding box. For target-specific generation, this is a massive waste of GPU cycles because we <em>already know where the Mpro active site is</em> (the catalytic dyad of His41 and Cys145).</p>
+<p>To optimize this for our high-throughput funnel, the pipeline utilizes <strong>DiffDock-Pocket</strong>. Instead of sampling the initial translation noise from a wide distribution covering the whole protein, we heavily constrain the initial bounding box.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Conceptual representation of the Pocket-Constrained Diffusion</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># By limiting the translation variance, we skip the &#34;search&#34; phase </span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># and dedicate all reverse-diffusion steps to &#34;refinement&#34;</span>
+</span></span><span style="display:flex;"><span>pocket_center <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>tensor([<span style="color:#ae81ff">10.0</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">2.0</span>, <span style="color:#ae81ff">23.0</span>])  <span style="color:#75715e"># Mpro Active Site Coords</span>
+</span></span><span style="display:flex;"><span>translation_variance <span style="color:#f92672">=</span> <span style="color:#ae81ff">5.0</span>  <span style="color:#75715e"># Constrained 5 Angstrom radius</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Initialize ligand state close to the pocket</span>
+</span></span><span style="display:flex;"><span>ligand_pos <span style="color:#f92672">=</span> sample_gaussian(mean<span style="color:#f92672">=</span>pocket_center, var<span style="color:#f92672">=</span>translation_variance)
+</span></span></code></pre></div><p>By constraining the $SE(3)$ translation space, we achieve two things:</p>
+<ol>
+<li><strong>Massive Speedup:</strong> We can drastically reduce the number of inference steps (e.g., from 40 steps to 15 steps) required by the ODE solver, because the model no longer has to drag the ligand across the protein surface.</li>
+<li><strong>Higher Precision:</strong> 100% of the network&rsquo;s capacity is spent on high-resolution torsional refinement $(SO(2)^{m})$ and resolving atomic clashes, rather than global pathfinding.</li>
+</ol>
+<h4 id="54-the-output">5.4 The Output<a hidden class="anchor" aria-hidden="true" href="#54-the-output">#</a></h4>
+<p>The output of Gate 3a is a single, physics-informed <code>docked_ligand.sdf</code> file. We have successfully taken a hallucinatory text strings (SELFIES), filtered it for biological viability (Gate 1), given it 3D mass (Gate 2), and folded it into the target receptor (Gate 3a).</p>
+<p>We now have a true physical complex. The final, definitive step is to accurately calculate the binding affinity $(pK_{d})$ of this complex using a model that fundamentally understands 3D spatial geometry: The EGNN.</p>
+<h2 id="6-gate-3b-se3-equivariant-3d-scoring-egnn">6. Gate 3b: $SE(3)$-Equivariant 3D Scoring (EGNN)<a hidden class="anchor" aria-hidden="true" href="#6-gate-3b-se3-equivariant-3d-scoring-egnn">#</a></h2>
+<p>By the end of Gate 3a, the pipeline has generated a chemically valid sequence, filtered it for biological safety, and used diffusion to fold it into a physically viable 3D pose inside the Mpro active site.</p>
+<p>The final task is to act as an oracle: evaluating this 3D point cloud to predict the exact binding affinity $(pK_{d})$. This is the most computationally and mathematically demanding step in the entire architecture.</p>
+<h4 id="61-the-equivariance-imperative">6.1 The Equivariance Imperative<a hidden class="anchor" aria-hidden="true" href="#61-the-equivariance-imperative">#</a></h4>
+<p>Predicting molecular properties from 3D coordinates is notoriously difficult. If you need the raw $(X, Y, Z)$ coordinates of a protein-ligand complex into a standard Multi-Layer Perceptron (MLP) or a 3D-Convolutional Neural Network, the model will fail.</p>
+<p>The reason is <strong>spatial orientation</strong>. If a protein is rotated by 90 degrees in space, its underlying biology and binding affinity remain exactly the same, but every single coordinate value changes completely. A standard neural network has to &ldquo;re-learn&rdquo; the same molecule form thousands of different angles (a brute-force approach called data augmentation), which is hopefully inefficient for complex point clouds.</p>
+<p>To solve this, the pipeline&rsquo;s scoring engine is an <strong>Equivariant Graph Neural Network (EGNN)</strong>. It guarantees that if the input coordinates are rotated or translated, transformations define by the Special Euclidean group $SE(3)$, the internal vector representations update synchronously. This preserves the fundamental geometric relationships perfectly without requiring any artificial data augmentation.</p>
+<h4 id="62-data-engineering-complex-graph-construction">6.2 Data Engineering: Complex Graph Construction<a hidden class="anchor" aria-hidden="true" href="#62-data-engineering-complex-graph-construction">#</a></h4>
+<p>To train a model to predict real-world binding affinity, we cannot use generated data; we need wet-lab truth. The EGNN is trained on the <strong>PDBbind Refined Set</strong>, a highly curated database of experimentally resolved protein-ligand co-crystal structures.</p>
+<p>Before the network can process these complexes, the <code>build_complex_graph</code> module translates them into spatial graphs. For every atom in both the protein and the ligand, we extract 10 specific RDKit features:</p>
+<ol>
+<li>Atomic Number</li>
+<li>Degree (Connectivity)</li>
+<li>Gasteiger Partial Charge</li>
+<li>Aromaticity</li>
+<li>Atomic Mass</li>
+<li>Explicit Valence</li>
+<li>Hydrophobicity (LogP contribution)</li>
+<li>Formal Charge</li>
+<li>Van der Waals Radius</li>
+<li>A binary flag (<code>is_ligand</code>)</li>
+</ol>
+<p>To make message passing computationally tractable, we define a $10.0$ Å <code>pocket_radius</code> around the ligand and discard the rest of the protein. We then compute the pairwise Euclidean distance matrix <code>torch.cdist(prot_pos, lig_pos)</code> and use a $5.0$ Å distance cutoff to create edges between any interacting atoms, establishing the paths for message passing.</p>
+<h4 id="63-the-architecture">6.3 The Architecture<a hidden class="anchor" aria-hidden="true" href="#63-the-architecture">#</a></h4>
+<p>The core of the model is the <code>Gate3_EGNNScorrer</code>. It takes the atomic features, 3D positions, and edge indices, and processes them through 6 layers of equivariant message passing.</p>
+<p>Here is the exact architecture block defining the network:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Gate3_EGNNScorrer</span>(nn<span style="color:#f92672">.</span>Module):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, hidden_dim<span style="color:#f92672">=</span><span style="color:#ae81ff">256</span>, num_layers<span style="color:#f92672">=</span><span style="color:#ae81ff">6</span>, num_rbf<span style="color:#f92672">=</span><span style="color:#ae81ff">32</span>):
+</span></span><span style="display:flex;"><span>        super()<span style="color:#f92672">.</span><span style="color:#a6e22e">__init__</span>()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 1. Input Encodings</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>embedding <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Embedding(<span style="color:#ae81ff">100</span>, hidden_dim)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>feature_lin <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Linear(<span style="color:#ae81ff">8</span>, hidden_dim)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 2. Radial Basis Function (RBF) Initialization</span>
+</span></span><span style="display:flex;"><span>        rbf_range <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>linspace(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">5</span>, num_rbf)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>register_buffer(<span style="color:#e6db74">&#39;rbf_range&#39;</span>, rbf_range)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>rbf_coeff <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">0.5</span> <span style="color:#f92672">/</span> (self<span style="color:#f92672">.</span>rbf_range[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">-</span> self<span style="color:#f92672">.</span>rbf_range[<span style="color:#ae81ff">0</span>])<span style="color:#f92672">.</span>item()<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 3. The Equivariant Layers</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>layers <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>ModuleList([EGNN_Layer(hidden_dim, num_rbf) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(num_layers)])
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 4. The Predictive Head</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>mlp_head <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>Sequential(
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(hidden_dim, <span style="color:#ae81ff">128</span>),
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>SiLU(),
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Dropout(<span style="color:#ae81ff">0.3</span>),
+</span></span><span style="display:flex;"><span>            nn<span style="color:#f92672">.</span>Linear(<span style="color:#ae81ff">128</span>, <span style="color:#ae81ff">1</span>)  <span style="color:#75715e"># Outputs a single float: pKd (Binding Affinity)</span>
+</span></span><span style="display:flex;"><span>        )
+</span></span></code></pre></div><p><strong>The Radial Basis Function (RBF) Expansion</strong>
+Notice the RBF initialization. Instead of operating on absolute coordinates, the EGNN operates entirely on <strong>relative distances</strong>. However, passing distance as a single scalar provides a weak gradient signal.</p>
+<p>During the forward pass, the model &ldquo;smears&rdquo; the continuous distance into 32 discrete, differentiable Gaussian bins (<code>edge_attr</code>):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>diff <span style="color:#f92672">=</span> pos[edge_index[<span style="color:#ae81ff">0</span>]] <span style="color:#f92672">-</span> pos[edge_index[<span style="color:#ae81ff">1</span>]]
+</span></span><span style="display:flex;"><span>dist <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>sqrt(torch<span style="color:#f92672">.</span>sum(diff<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>, dim<span style="color:#f92672">=-</span><span style="color:#ae81ff">1</span>, keepdim<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1e-8</span>)
+</span></span><span style="display:flex;"><span>edge_attr <span style="color:#f92672">=</span> torch<span style="color:#f92672">.</span>exp(self<span style="color:#f92672">.</span>rbf_coeff <span style="color:#f92672">*</span> (dist <span style="color:#f92672">-</span> self<span style="color:#f92672">.</span>rbf_range)<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>This provides a rich spatial embedding for the network to learn smooth physical interactions like Van der Waals forces.</p>
+<h4 id="64-inside-the-egnn-layer-the-mathematics-of-equivariance">6.4 Inside the EGNN Layer: The Mathematics of Equivariance<a hidden class="anchor" aria-hidden="true" href="#64-inside-the-egnn-layer-the-mathematics-of-equivariance">#</a></h4>
+<p>Inside each <code>EGNN_Layer</code>, three distinct Multi-Layer Perceptrons (MLPs) update the graph simultaneously. This is where the actual $SE(3)$ physics simulation occurs.</p>
+<ol>
+<li><strong>The Edge Update (<code>edge_mlp</code>):</strong>
+We compute the message $m_{ij}$ between atom $i$ and atom $j$ by concatenating their node features $h$ and the RBF distance embedding:
+$$m_{ij} = SiLU (W \cdot \left[h_{i},h_{j}, a_{ij} \right] )$$</li>
+<li><strong>The Coordinate Update (<code>coord_mlp</code>)-<em>The Equivariant step</em>:</strong>
+the network updates the 3D coordinates by predicting a scalar weight (<code>pos_weight</code>) for every edge. It then multiplies this weight by the relative vector $(x_{i} - x_{j})$. Because we only scale the relative difference vector, this operation applies &ldquo;push/pull forces&rdquo; that are strictly $SE(3)$-equivariant.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># Compute Coordinate Updates </span>
+</span></span><span style="display:flex;"><span>pos_weight <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>coord_mlp(m_ij)
+</span></span><span style="display:flex;"><span>pos_update <span style="color:#f92672">=</span> coord_diff <span style="color:#f92672">*</span> torch<span style="color:#f92672">.</span>clamp(pos_weight, min<span style="color:#f92672">=-</span><span style="color:#ae81ff">10.</span>, max<span style="color:#f92672">=</span><span style="color:#ae81ff">10.</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pos_aggr <span style="color:#f92672">=</span> scatter(pos_update<span style="color:#f92672">.</span>float(), row, dim<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, dim_size<span style="color:#f92672">=</span>pos<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">0</span>), reduce<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;sum&#39;</span>)<span style="color:#f92672">.</span>to(pos<span style="color:#f92672">.</span>dtype)
+</span></span><span style="display:flex;"><span>pos_new <span style="color:#f92672">=</span> pos <span style="color:#f92672">+</span> (pos_aggr <span style="color:#f92672">/</span> counts<span style="color:#f92672">.</span>to(pos<span style="color:#f92672">.</span>dtype))
+</span></span></code></pre></div><ol start="3">
+<li><strong>The Feature Update (<code>node_mlp</code>)-<em>The Invariant Step</em>:</strong>
+The node features are updated by aggregating the message $m_{ij}$. Because the messages were derived from distances (which do not change when the molecule is rotated), the resulting node features are completely rotationally invariant.</li>
+</ol>
+<p>$$h_i^{l+1} = h_i^l + \phi_h \left( h_i^l, \sum_{j \neq i} m_{ij} \right)$$</p>
+<h4 id="65-the-architectural-trick-ligand-centric-readout">6.5 The Architectural Trick: Ligand-Centric Readout<a hidden class="anchor" aria-hidden="true" href="#65-the-architectural-trick-ligand-centric-readout">#</a></h4>
+<p>After 6 layers of equivariant message passing, the protein pocket has exerted its &ldquo;forces&rdquo; on the ligand, and the ligand&rsquo;s features reflect its environment.</p>
+<p>A standard Graph Neural Network would run a global mean pool over the entire graph to predict the final score. However, doing so would drown the signal of the tiny ligand (e.g., 40 atoms) in the massive noise of the protein pocket (e.g., 1000 atoms).</p>
+<p>Instead, the <code>Gate3_EGNNScorrer</code> employs a <strong>Ligand-centric Readout</strong>. Using the <code>is_ligand</code> boolean mask injected during graph construction, I slice the tensor to pool only the ligand atoms before passing it to the final MLP:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>ligand_mask <span style="color:#f92672">=</span> (x[:, <span style="color:#ae81ff">9</span>] <span style="color:#f92672">==</span> <span style="color:#ae81ff">1.0</span>)
+</span></span><span style="display:flex;"><span>h_ligand <span style="color:#f92672">=</span> h[ligand_mask]
+</span></span><span style="display:flex;"><span>batch_ligand <span style="color:#f92672">=</span> batch[ligand_mask]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Pool ONLY the ligand&#39;s invariant representations</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> h_ligand<span style="color:#f92672">.</span>size(<span style="color:#ae81ff">0</span>) <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>    pooled <span style="color:#f92672">=</span> global_mean_pool(h_ligand, batch_ligand)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>    pooled <span style="color:#f92672">=</span> global_mean_pool(h, batch)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>mlp_head(pooled)
+</span></span></code></pre></div><p>By forcing the MLP to predict binding affinity solely from the ligand&rsquo;s final embedded state, the network must learn how to protein alters the ligand, rather than just memorizing the static macroscopic shape of the target pocket.</p>
+<h4 id="66-hardware-optimization-bypassing-the-io-bottleneck">6.6 Hardware Optimization: Bypassing the I/O Bottleneck<a hidden class="anchor" aria-hidden="true" href="#66-hardware-optimization-bypassing-the-io-bottleneck">#</a></h4>
+<p>Parsing complex PDB and SDF files with RDKit at runtime creates CPU bottleneck, starving the GPU and dropping the utilization to near 10%.</p>
+<p>To solve this, I implemented an <strong>SSD Tensor Cache</strong> in <code>train_egnn.py</code>. During the first epoch, the CPU parses the RDKit files and instantly serializes the compiled PyTorch Geometric graphs directly to an NVMe SSD. For all subsequent epochs, the Dataloader bypasses RDKit entirely, streaming raw tensor memory straight to the GPU.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>cache_path <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>join(self<span style="color:#f92672">.</span>cache_fir, <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>pdb_id<span style="color:#e6db74">}</span><span style="color:#e6db74">.pt&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># FAST PATH: If we already built this graph, load it from the SSD instantly </span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>exists(cache_path): 
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> torch<span style="color:#f92672">.</span>load(cache_path)
+</span></span></code></pre></div><p>Paired with <code>torch.amp.autocast('cuda', dtype=torch.bfloat16)</code> to optimize Tensor Core matrix multiplication without gradient underflow, this custom caching layer ensures the EGNN trains at absolute maximum hardware throughput.</p>
+<h2 id="7-the-orchestrator-system-integration">7. The Orchestrator: System Integration<a hidden class="anchor" aria-hidden="true" href="#7-the-orchestrator-system-integration">#</a></h2>
+<p>The models we discussed, SELFIES-GPT, the Multimodal ADMET Oracle, Diffdock-Pocket and the EGNN, are fundamentally different architectures operating on entirely different mathematical representations (1D sequences, 2D graphs, and 3D point clouds).
+To unify these, I built an <strong>Orchestrator</strong>(<code>orchestrator.py</code>). The orchestrator manages the handoff between the generative engine and the scoring gates, handling the data transformations (e.g., $SMILES \rightarrow ETKDG conformers \rightarrow DiffDock poses$) required at each step. When executed, the orchestrator:</p>
+<ol>
+<li>Triggers the autoregressive generation of Mpro-targeted <strong>SELFIES</strong>.</li>
+<li>Translates the SELFIES to SMILES and batches them through the 1D/2D ADMET Oracle (Gate 1).</li>
+<li>Takes the surviving &ldquo;elite&rdquo; molecules, generates their 3D ETKDG conformers, and saves them to temporary SDF files (Gate 2).</li>
+<li>Programmatically invokes the DIffDock-Pocket diffusion process to fold the ligands into the receptor (Gate 3a).</li>
+<li>Compiles the resulting 3D complexes into PyTorch Geometric tensors and runs the final EGNN scoring pass (Gate 3b).</li>
+</ol>
+<p>This entire funnel executes end-to-end without manual intervention, demonstrating the automated flow from generative text all the way to $SE(3)$ spatial scoring.
+<strong>LINK HERE</strong></p>
+<h2 id="8-deployment-and-the-ui-trade-off">8. Deployment and The UI Trade-off<a hidden class="anchor" aria-hidden="true" href="#8-deployment-and-the-ui-trade-off">#</a></h2>
+<p>Deploying it to the web so that others can interact came with some trade-off.
+The project is deployed using a decoupled monorepo architecture:</p>
+<ul>
+<li><code>backend/</code>: Contains the FastAPI routing, model weights, and the Python ML logic.</li>
+<li><code>molecular-ensemble-ui/</code>: The Vercel-deployed frontend dashboard for interactive exploration.</li>
+</ul>
+<p><strong>The Compute Bottleneck: Web UX vs. Physics Simulation</strong></p>
+<p>While Phase 1 and Gate 1 are highly optimized and can run live inference behind a web endpoint, Gate 3a introduces a severe constraint. Running reverse-diffusion over $SE(3)$ to fold a molecule into a protein pocket requires massive, sustained GPU compute. In a production web environment, forcing a user to wait minutes for a synchronous DiffDock batch to complete is an architectural anti-pattern that leads to browser timeouts and crashes queues.</p>
+<p><strong>The Solution: Honest Visualization</strong></p>
+<p>To solve this, the UI deployment utilizes a hybrid approach:</p>
+<ol>
+<li><strong>Live Generation and Filtering:</strong> The UI can trigger SELFIES-GPT and the Gate 1 ADMET oracle dynamically.</li>
+<li><strong>Precomputed Elites for 3D Scoring:</strong> For the final 3D docking and EGNN scoring phase, the dashboard transitions to visualizing a precomputed <code>orchestrator.py</code> run.</li>
+</ol>
+<p>Crucially, the data provenance is strictly maintained. The UI does not &ldquo;fake&rdquo; the pipeline by pasting randomly generated names over static scores. The dashboard exclusively displays the true &ldquo;elite&rdquo; molecules that legitimately generated via Phase 1, survived Gate 1, and were processed through DiffDock by the orchestrator.</p>
+<p>By separating the heavy end-to-end compute script from the web visualization layer, the system maintains 100% scientific integrity while still providing a lightning fast, responsive dashboard for others to explore the physics grounded candidates.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://lav-aniya.github.io/tags/deep-learning/">Deep Learning</a></li>
+      <li><a href="https://lav-aniya.github.io/tags/python/">Python</a></li>
+      <li><a href="https://lav-aniya.github.io/tags/cadd/">CADD</a></li>
+      <li><a href="https://lav-aniya.github.io/tags/egnn/">EGNN</a></li>
+      <li><a href="https://lav-aniya.github.io/tags/pytorch/">PyTorch</a></li>
+      <li><a href="https://lav-aniya.github.io/tags/geometric-deep-learning/">Geometric Deep Learning</a></li>
+    </ul>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on x"
+            href="https://x.com/intent/tweet/?text=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline&amp;url=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f&amp;hashtags=DeepLearning%2cPython%2cCADD%2cEGNN%2cPyTorch%2cGeometricDeepLearning">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f&amp;title=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline&amp;summary=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline&amp;source=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on reddit"
+            href="https://reddit.com/submit?url=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f&title=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on whatsapp"
+            href="https://api.whatsapp.com/send?text=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline%20-%20https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on telegram"
+            href="https://telegram.me/share/url?text=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline&amp;url=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=Autonomous%20Drug%20Discovery%3a%20A%20Multimodal%20De%20Novo%20Generation%20%26%20SE%283%29-Equivariant%20Scoring%20Pipeline&u=https%3a%2f%2flav-aniya.github.io%2fprojects%2fmolecular_ensemble%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="https://lav-aniya.github.io/">Lav-Aniya&#39;s Site</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+</script><script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    
+    
+    const isDark = document.body.classList.contains("dark");
+
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: isDark ? 'dark' : 'default',
+        themeVariables: {
+            
+            primaryTextColor: isDark ? '#e1e1e1' : '#2e2e33',
+            lineColor: isDark ? '#e1e1e1' : '#2e2e33',
+            fontSize: '16px'
+        }
+    });
+</script>
+
+<style>
+     
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError : false
+        });
+    });
+</script></body>
+
+</html>

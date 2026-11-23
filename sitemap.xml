@@ -2,6 +2,9 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://lav-aniya.github.io/projects/molecular_ensemble/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://lav-aniya.github.io/blogs/optimizers/</loc>
     <lastmod>2025-09-21T00:00:00+00:00</lastmod>
   </url><url>
@@ -15,13 +18,34 @@
     <loc>https://lav-aniya.github.io/blogs/optimizers3/</loc>
     <lastmod>2025-09-22T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://lav-aniya.github.io/blogs/</loc>
-    <lastmod>2025-09-22T00:00:00+00:00</lastmod>
+    <loc>https://lav-aniya.github.io/tags/cadd/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://lav-aniya.github.io/tags/deep-learning/</loc>
-    <lastmod>2025-09-22T00:00:00+00:00</lastmod>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/tags/egnn/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/tags/geometric-deep-learning/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://lav-aniya.github.io/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/projects/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/tags/python/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/tags/pytorch/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/tags/</loc>
+    <lastmod>2026-11-23T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://lav-aniya.github.io/blogs/</loc>
     <lastmod>2025-09-22T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://lav-aniya.github.io/series/o/</loc>
@@ -33,20 +57,11 @@
     <loc>https://lav-aniya.github.io/series/</loc>
     <lastmod>2025-09-22T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://lav-aniya.github.io/tags/</loc>
-    <lastmod>2025-09-22T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://lav-aniya.github.io/categories/</loc>
   </url><url>
     <loc>https://lav-aniya.github.io/tags/computer-vision/</loc>
   </url><url>
     <loc>https://lav-aniya.github.io/tags/gans/</loc>
-  </url><url>
-    <loc>https://lav-aniya.github.io/projects/</loc>
-  </url><url>
-    <loc>https://lav-aniya.github.io/tags/python/</loc>
-  </url><url>
-    <loc>https://lav-aniya.github.io/tags/pytorch/</loc>
   </url><url>
     <loc>https://lav-aniya.github.io/tags/robotics/</loc>
   </url><url>
