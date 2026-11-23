@@ -6,12 +6,11 @@
     <description>Recent content in Geometric Deep Learning on Lav-Aniya&#39;s Site</description>
     <generator>Hugo -- 0.170.1</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Nov 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://lav-aniya.github.io/tags/geometric-deep-learning/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Autonomous Drug Discovery: A Multimodal De Novo Generation &amp; SE(3)-Equivariant Scoring Pipeline</title>
       <link>https://lav-aniya.github.io/projects/molecular_ensemble/</link>
-      <pubDate>Mon, 23 Nov 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://lav-aniya.github.io/projects/molecular_ensemble/</guid>
       <description>An end-to-end multimodal drug discovery pipeline combining SELFIES-GPT de novo generation, D-MPNN/Transformer ADMET filtering, DiffDock-Pocket posing, and SE(3)-equivariant 3D binding affinity scoring.</description>
     </item>
